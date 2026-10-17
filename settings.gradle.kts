@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ScratchMart"
+rootProject.name = "MedLifecycle"
 
 include(":app")

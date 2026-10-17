@@ -4,16 +4,15 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
-import com.example.data.model.CardTier
 import com.example.data.model.CartItem
-import com.example.data.model.Coupon
-import com.example.data.model.DiscountType
+import com.example.data.model.Medicine
 import com.example.data.model.Order
-import com.example.data.model.Product
-import com.example.data.model.Quest
+import com.example.data.model.PrescriptionScanResult
+import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
 import com.example.data.repository.StoreRepository
 import com.example.ui.audio.SoundManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class StoreViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -35,45 +35,38 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Sound toggle state
+    // Audio & Sound
     val isSoundEnabled: StateFlow<Boolean> = SoundManager.isSoundEnabled
+    fun toggleSound() = SoundManager.toggleSound()
 
-    fun toggleSound() {
-        SoundManager.toggleSound()
+    // Supabase Live Sync Indicator
+    private val _isSupabaseLive = MutableStateFlow(true)
+    val isSupabaseLive: StateFlow<Boolean> = _isSupabaseLive.asStateFlow()
+
+    fun toggleSupabaseStatus() {
+        _isSupabaseLive.value = !_isSupabaseLive.value
     }
 
-    fun playScratchSound() {
-        SoundManager.playScratchSound()
-    }
-
-    // Wishlist State
+    // Wishlist
     val wishlistIds: StateFlow<Set<String>> = repository.wishlistIds
         .map { it.toSet() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptySet()
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
-    val wishlistCount: StateFlow<Int> = repository.wishlistCount.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
-
-    fun toggleWishlist(productId: String) {
-        val isWishlisted = wishlistIds.value.contains(productId)
+    fun toggleWishlist(medicineId: String) {
+        val isWishlisted = wishlistIds.value.contains(medicineId)
         viewModelScope.launch {
-            repository.toggleWishlist(productId, isWishlisted)
+            repository.toggleWishlist(medicineId, isWishlisted)
             SoundManager.playHeartSound()
         }
     }
 
-    // Products & Filtering
-    val allProducts: StateFlow<List<Product>> = repository.allProducts.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+    // Medicines & Filtering
+    val allMedicines: StateFlow<List<Medicine>> = repository.allMedicines.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val nearExpiryMedicines: StateFlow<List<Medicine>> = repository.nearExpiryMedicines.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
     )
 
     private val _searchQuery = MutableStateFlow("")
@@ -82,86 +75,242 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCategory = MutableStateFlow("All")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    val filteredProducts: StateFlow<List<Product>> = combine(
-        allProducts,
+    val filteredMedicines: StateFlow<List<Medicine>> = combine(
+        allMedicines,
         searchQuery,
         selectedCategory,
         wishlistIds
-    ) { products, query, category, wishlisted ->
-        products.filter { product ->
-            val matchesCategory = when (category.lowercase()) {
+    ) { meds, query, cat, wishlisted ->
+        meds.filter { med ->
+            val matchesCategory = when (cat.lowercase()) {
                 "all" -> true
-                "wishlist", "❤️ wishlist" -> wishlisted.contains(product.id)
-                else -> product.category.equals(category, ignoreCase = true)
+                "wishlist", "❤️ wishlist" -> wishlisted.contains(med.id)
+                "fever & pain" -> med.category.equals("Fever & Pain", true)
+                "antibiotics" -> med.category.equals("Antibiotics", true)
+                "vitamins" -> med.category.equals("Vitamins", true)
+                "diabetes" -> med.category.equals("Diabetes", true)
+                "first aid" -> med.category.equals("First Aid", true)
+                else -> med.category.contains(cat, true)
             }
             val matchesQuery = query.isBlank() ||
-                    product.title.contains(query, ignoreCase = true) ||
-                    product.description.contains(query, ignoreCase = true)
+                    med.brandName.contains(query, true) ||
+                    med.genericSalt.contains(query, true) ||
+                    med.manufacturer.contains(query, true)
             matchesCategory && matchesQuery
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Scratch Cards & Coupons
-    val scratchCards: StateFlow<List<ScratchCard>> = repository.allScratchCards.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    // Prescription AI Scanner
+    private val _prescriptionResult = MutableStateFlow<PrescriptionScanResult?>(null)
+    val prescriptionResult: StateFlow<PrescriptionScanResult?> = _prescriptionResult.asStateFlow()
 
-    val unscratchedCount: StateFlow<Int> = repository.unscratchedCardCount.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
+    private val _isScanningRx = MutableStateFlow(false)
+    val isScanningRx: StateFlow<Boolean> = _isScanningRx.asStateFlow()
 
-    val availableCoupons: StateFlow<List<Coupon>> = repository.availableCoupons.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    fun simulatePrescriptionScan(onCompleted: () -> Unit) {
+        viewModelScope.launch {
+            _isScanningRx.value = true
+            SoundManager.playScratchSound()
+            delay(2000) // 2-second scanning laser animation
+            _prescriptionResult.value = PrescriptionScanResult(
+                isVerified = true,
+                doctorName = "Dr. Rajesh Shenoy, MD",
+                clinicName = "City Health Clinic, Mangaluru",
+                extractedMedicines = listOf("Augmentin 625 Duo", "Azithral 500", "Glycomet GP 1", "Pan-D")
+            )
+            _isScanningRx.value = false
+            SoundManager.playRevealSound()
+            onCompleted()
+        }
+    }
 
-    val allOrders: StateFlow<List<Order>> = repository.allOrders.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-
-    val quests: StateFlow<List<Quest>> = repository.quests
-
-    // Active Scratching Modal
-    private val _activeScratchingCard = MutableStateFlow<ScratchCard?>(null)
-    val activeScratchingCard: StateFlow<ScratchCard?> = _activeScratchingCard.asStateFlow()
+    fun clearPrescription() {
+        _prescriptionResult.value = null
+    }
 
     // Shopping Cart State
     private val _cartItems = MutableStateFlow<Map<String, CartItem>>(emptyMap())
     val cartItems: StateFlow<Map<String, CartItem>> = _cartItems.asStateFlow()
 
-    private val _selectedCoupon = MutableStateFlow<Coupon?>(null)
-    val selectedCoupon: StateFlow<Coupon?> = _selectedCoupon.asStateFlow()
-
-    // Order Tracking Modal State
-    private val _selectedOrderForTracking = MutableStateFlow<Order?>(null)
-    val selectedOrderForTracking: StateFlow<Order?> = _selectedOrderForTracking.asStateFlow()
-
-    // Order Success Celebration State
-    private val _lastCompletedOrder = MutableStateFlow<Order?>(null)
-    val lastCompletedOrder: StateFlow<Order?> = _lastCompletedOrder.asStateFlow()
-
-    // Quest claim celebration
-    private val _questRewardWon = MutableStateFlow<CardTier?>(null)
-    val questRewardWon: StateFlow<CardTier?> = _questRewardWon.asStateFlow()
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+    fun addToCart(medicine: Medicine) {
+        val current = _cartItems.value.toMutableMap()
+        val existing = current[medicine.id]
+        if (existing != null) {
+            current[medicine.id] = existing.copy(quantity = existing.quantity + 1)
+        } else {
+            current[medicine.id] = CartItem(medicine, 1)
+        }
+        _cartItems.value = current
+        SoundManager.playHeartSound()
     }
 
-    fun setSelectedCategory(category: String) {
-        _selectedCategory.value = category
+    fun updateCartQuantity(medicineId: String, delta: Int) {
+        val current = _cartItems.value.toMutableMap()
+        val existing = current[medicineId] ?: return
+        val newQty = existing.quantity + delta
+        if (newQty <= 0) {
+            current.remove(medicineId)
+        } else {
+            current[medicineId] = existing.copy(quantity = newQty)
+        }
+        _cartItems.value = current
     }
+
+    fun removeCartItem(medicineId: String) {
+        val current = _cartItems.value.toMutableMap()
+        current.remove(medicineId)
+        _cartItems.value = current
+    }
+
+    // MedWallet & Eco-Karma
+    private val _medWalletBalance = MutableStateFlow(120.0)
+    val medWalletBalance: StateFlow<Double> = _medWalletBalance.asStateFlow()
+
+    private val _ecoKarmaPoints = MutableStateFlow(350)
+    val ecoKarmaPoints: StateFlow<Int> = _ecoKarmaPoints.asStateFlow()
+
+    private val _useWalletCashback = MutableStateFlow(false)
+    val useWalletCashback: StateFlow<Boolean> = _useWalletCashback.asStateFlow()
+
+    fun toggleWalletCashback() {
+        _useWalletCashback.value = !_useWalletCashback.value
+    }
+
+    fun calculateSubtotal(): Double {
+        return _cartItems.value.values.sumOf { it.medicine.price * it.quantity }
+    }
+
+    fun calculateEcoSavings(): Double {
+        return _cartItems.value.values.sumOf {
+            if (it.medicine.isNearExpiry) (it.medicine.mrp - it.medicine.price) * it.quantity else 0.0
+        }
+    }
+
+    fun calculateWalletDiscount(): Double {
+        if (!_useWalletCashback.value) return 0.0
+        val sub = calculateSubtotal()
+        return _medWalletBalance.value.coerceAtMost(sub)
+    }
+
+    fun calculateGrandTotal(): Double {
+        val sub = calculateSubtotal()
+        val walletDeduction = calculateWalletDiscount()
+        return (sub - walletDeduction).coerceAtLeast(0.0)
+    }
+
+    // Orders & Tracking
+    val allOrders: StateFlow<List<Order>> = repository.allOrders.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val latestOrder: StateFlow<Order?> = repository.latestOrder.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), null
+    )
+
+    private val _lastPlacedOrder = MutableStateFlow<Order?>(null)
+    val lastPlacedOrder: StateFlow<Order?> = _lastPlacedOrder.asStateFlow()
+
+    fun checkout(paymentMethod: String, onOrderPlaced: (Order) -> Unit) {
+        val items = _cartItems.value.values.toList()
+        if (items.isEmpty()) return
+
+        val summary = items.joinToString(", ") { "${it.quantity}x ${it.medicine.brandName}" }
+        val grandTotal = calculateGrandTotal()
+        val ecoSavings = calculateEcoSavings()
+        val rxUrl = _prescriptionResult.value?.doctorName
+
+        viewModelScope.launch {
+            if (_useWalletCashback.value) {
+                _medWalletBalance.value = (_medWalletBalance.value - calculateWalletDiscount()).coerceAtLeast(0.0)
+            }
+
+            val order = repository.placeOrder(
+                items = summary,
+                totalAmount = grandTotal,
+                ecoSavings = ecoSavings,
+                prescriptionUrl = rxUrl
+            )
+            _cartItems.value = emptyMap()
+            _useWalletCashback.value = false
+            _lastPlacedOrder.value = order
+            SoundManager.playCheckoutSound()
+            onOrderPlaced(order)
+        }
+    }
+
+    fun dismissOrderCelebration() {
+        _lastPlacedOrder.value = null
+    }
+
+    // Evaluator Presenter Controls
+    fun simulateChemistPackOrder() {
+        val order = latestOrder.value ?: return
+        viewModelScope.launch {
+            repository.updateOrderStatus(order.id, "ready_for_pickup", 2)
+            SoundManager.playRevealSound()
+        }
+    }
+
+    fun simulateRiderOutForDelivery() {
+        val order = latestOrder.value ?: return
+        viewModelScope.launch {
+            repository.updateOrderStatus(order.id, "out_for_delivery", 3)
+            SoundManager.playRevealSound()
+        }
+    }
+
+    fun simulateRiderMarkDelivered() {
+        val order = latestOrder.value ?: return
+        viewModelScope.launch {
+            repository.updateOrderStatus(order.id, "delivered", 4)
+            SoundManager.playCheckoutSound()
+        }
+    }
+
+    fun grantInstantDemoScratchCard() {
+        viewModelScope.launch {
+            repository.addScratchCard(
+                title = "Presenter Demo Jackpot",
+                subtitle = "Evaluator reward! Scratch to reveal ₹75 Cashback",
+                prizeType = "CASHBACK",
+                prizeValue = 75.0,
+                code = "DEMO${Random.nextInt(100, 999)}"
+            )
+            SoundManager.playRevealSound()
+        }
+    }
+
+    // Reverse Logistics Pickups
+    val reversePickups: StateFlow<List<ReversePickupRequest>> = repository.reversePickups.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    fun scheduleReverseDisposal(
+        stripCount: Int,
+        medicineNames: String,
+        address: String,
+        slot: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            repository.scheduleReverseDisposal(stripCount, medicineNames, address, slot)
+            _ecoKarmaPoints.value += 50
+            SoundManager.playRevealSound()
+            onSuccess()
+        }
+    }
+
+    // Scratch Cards
+    val scratchCards: StateFlow<List<ScratchCard>> = repository.allScratchCards.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val unscratchedCount: StateFlow<Int> = repository.unscratchedCardCount.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), 0
+    )
+
+    private val _activeScratchingCard = MutableStateFlow<ScratchCard?>(null)
+    val activeScratchingCard: StateFlow<ScratchCard?> = _activeScratchingCard.asStateFlow()
 
     fun openScratchModal(card: ScratchCard) {
         _activeScratchingCard.value = card
@@ -174,170 +323,19 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
     fun completeScratch(card: ScratchCard) {
         viewModelScope.launch {
             repository.markCardScratched(card)
-            SoundManager.playRevealSound()
-        }
-    }
-
-    fun addToCart(product: Product) {
-        val current = _cartItems.value.toMutableMap()
-        val existing = current[product.id]
-        if (existing != null) {
-            current[product.id] = existing.copy(quantity = existing.quantity + 1)
-        } else {
-            current[product.id] = CartItem(product = product, quantity = 1)
-        }
-        _cartItems.value = current
-        SoundManager.playHeartSound()
-    }
-
-    fun updateCartQuantity(productId: String, delta: Int) {
-        val current = _cartItems.value.toMutableMap()
-        val existing = current[productId] ?: return
-        val newQty = existing.quantity + delta
-        if (newQty <= 0) {
-            current.remove(productId)
-        } else {
-            current[productId] = existing.copy(quantity = newQty)
-        }
-        _cartItems.value = current
-    }
-
-    fun removeCartItem(productId: String) {
-        val current = _cartItems.value.toMutableMap()
-        current.remove(productId)
-        _cartItems.value = current
-    }
-
-    fun selectCoupon(coupon: Coupon?) {
-        _selectedCoupon.value = coupon
-    }
-
-    /**
-     * Allows typing manual promo codes like LUCKY2026, CYBERDROP, FREESHIP, VIP50.
-     * Returns null on success or error string message.
-     */
-    fun applyManualPromoCode(code: String): String? {
-        val clean = code.trim().uppercase()
-        if (clean.isBlank()) return "Please enter a valid code."
-
-        val coupon = when (clean) {
-            "LUCKY2026" -> Coupon(
-                code = "LUCKY2026",
-                description = "20% OFF Special Mystery Drop",
-                discountType = DiscountType.PERCENTAGE,
-                discountValue = 20.0,
-                minOrder = 0.0
-            )
-            "CYBERDROP" -> Coupon(
-                code = "CYBERDROP",
-                description = "$20 FLAT Instant Savings",
-                discountType = DiscountType.FLAT_AMOUNT,
-                discountValue = 20.0,
-                minOrder = 30.0
-            )
-            "FREESHIP" -> Coupon(
-                code = "FREESHIP",
-                description = "100% Free Priority Delivery",
-                discountType = DiscountType.FREE_SHIPPING,
-                discountValue = 12.0,
-                minOrder = 0.0
-            )
-            "VIP50" -> Coupon(
-                code = "VIP50",
-                description = "50% OFF High-Roller Haul",
-                discountType = DiscountType.PERCENTAGE,
-                discountValue = 50.0,
-                minOrder = 80.0
-            )
-            else -> return "Invalid promo code. Try 'LUCKY2026' or 'CYBERDROP'!"
-        }
-
-        val subtotal = calculateSubtotal()
-        if (subtotal < coupon.minOrder) {
-            return "Requires minimum cart value of $${coupon.minOrder.toInt()}."
-        }
-
-        _selectedCoupon.value = coupon
-        SoundManager.playRevealSound()
-        return null
-    }
-
-    fun calculateSubtotal(): Double {
-        return _cartItems.value.values.sumOf { it.product.price * it.quantity }
-    }
-
-    fun calculateDiscount(): Double {
-        val subtotal = calculateSubtotal()
-        val coupon = _selectedCoupon.value ?: return 0.0
-        if (subtotal < coupon.minOrder) return 0.0
-
-        return when (coupon.discountType) {
-            DiscountType.PERCENTAGE -> (subtotal * (coupon.discountValue / 100.0))
-            DiscountType.FLAT_AMOUNT -> coupon.discountValue.coerceAtMost(subtotal)
-            DiscountType.FREE_SHIPPING -> 12.0
-        }
-    }
-
-    fun calculateTotal(): Double {
-        return (calculateSubtotal() - calculateDiscount()).coerceAtLeast(0.0)
-    }
-
-    fun checkout() {
-        val items = _cartItems.value.values.toList()
-        if (items.isEmpty()) return
-
-        val subtotal = calculateSubtotal()
-        val discount = calculateDiscount()
-        val total = calculateTotal()
-        val appliedCoupon = _selectedCoupon.value
-
-        val summary = items.joinToString(", ") { "${it.quantity}x ${it.product.title}" }
-
-        viewModelScope.launch {
-            val order = repository.placeOrder(
-                itemsSummary = summary,
-                subtotal = subtotal,
-                discount = discount,
-                total = total,
-                appliedCoupon = appliedCoupon
-            )
-            _cartItems.value = emptyMap()
-            _selectedCoupon.value = null
-            _lastCompletedOrder.value = order
-            SoundManager.playCheckoutSound()
-        }
-    }
-
-    fun openOrderTracking(order: Order) {
-        _selectedOrderForTracking.value = order
-    }
-
-    fun closeOrderTracking() {
-        _selectedOrderForTracking.value = null
-    }
-
-    fun dismissOrderCelebration() {
-        _lastCompletedOrder.value = null
-    }
-
-    fun claimQuest(questId: String) {
-        viewModelScope.launch {
-            val tier = repository.claimQuest(questId)
-            if (tier != null) {
-                _questRewardWon.value = tier
-                SoundManager.playRevealSound()
+            when (card.prizeType) {
+                "CASHBACK" -> _medWalletBalance.value += card.prizeValue
+                "ECO_POINTS" -> _ecoKarmaPoints.value += card.prizeValue.toInt()
             }
-        }
-    }
-
-    fun dismissQuestReward() {
-        _questRewardWon.value = null
-    }
-
-    fun claimDailyBonusCard() {
-        viewModelScope.launch {
-            repository.createAndAwardScratchCard(CardTier.GOLD, "Daily Mystery Login")
             SoundManager.playRevealSound()
         }
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setSelectedCategory(cat: String) {
+        _selectedCategory.value = cat
     }
 }

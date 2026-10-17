@@ -5,38 +5,53 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.data.model.Coupon
+import com.example.data.model.Medicine
 import com.example.data.model.Order
-import com.example.data.model.Product
+import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
 import com.example.data.model.WishlistItem
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ProductDao {
-    @Query("SELECT * FROM products ORDER BY title ASC")
-    fun getAllProducts(): Flow<List<Product>>
+interface MedicineDao {
+    @Query("SELECT * FROM medicines ORDER BY brandName ASC")
+    fun getAllMedicines(): Flow<List<Medicine>>
+
+    @Query("SELECT * FROM medicines WHERE isNearExpiry = 1 ORDER BY expiryDaysLeft ASC")
+    fun getNearExpiryMedicines(): Flow<List<Medicine>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertProducts(products: List<Product>)
+    suspend fun insertMedicines(medicines: List<Medicine>)
 
-    @Query("SELECT COUNT(*) FROM products")
-    suspend fun getProductCount(): Int
+    @Query("SELECT COUNT(*) FROM medicines")
+    suspend fun getMedicineCount(): Int
 }
 
 @Dao
-interface WishlistDao {
-    @Query("SELECT productId FROM wishlist ORDER BY addedAt DESC")
-    fun getAllWishlistIds(): Flow<List<String>>
+interface OrderDao {
+    @Query("SELECT * FROM orders ORDER BY createdAt DESC")
+    fun getAllOrders(): Flow<List<Order>>
+
+    @Query("SELECT * FROM orders ORDER BY createdAt DESC LIMIT 1")
+    fun getLatestOrder(): Flow<Order?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addToWishlist(item: WishlistItem)
+    suspend fun insertOrder(order: Order)
 
-    @Query("DELETE FROM wishlist WHERE productId = :productId")
-    suspend fun removeFromWishlist(productId: String)
+    @Update
+    suspend fun updateOrder(order: Order)
 
-    @Query("SELECT COUNT(*) FROM wishlist")
-    fun getWishlistCount(): Flow<Int>
+    @Query("UPDATE orders SET status = :status, currentStage = :stage WHERE id = :orderId")
+    suspend fun updateOrderStatus(orderId: String, status: String, stage: Int)
+}
+
+@Dao
+interface ReversePickupDao {
+    @Query("SELECT * FROM reverse_pickups ORDER BY createdAt DESC")
+    fun getAllPickups(): Flow<List<ReversePickupRequest>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPickup(pickup: ReversePickupRequest)
 }
 
 @Dao
@@ -61,28 +76,13 @@ interface ScratchCardDao {
 }
 
 @Dao
-interface CouponDao {
-    @Query("SELECT * FROM coupons ORDER BY isUsed ASC, claimedAt DESC")
-    fun getAllCoupons(): Flow<List<Coupon>>
-
-    @Query("SELECT * FROM coupons WHERE isUsed = 0")
-    fun getAvailableCoupons(): Flow<List<Coupon>>
+interface WishlistDao {
+    @Query("SELECT medicineId FROM wishlist ORDER BY addedAt DESC")
+    fun getAllWishlistIds(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCoupon(coupon: Coupon)
+    suspend fun addToWishlist(item: WishlistItem)
 
-    @Update
-    suspend fun updateCoupon(coupon: Coupon)
-}
-
-@Dao
-interface OrderDao {
-    @Query("SELECT * FROM orders ORDER BY timestamp DESC")
-    fun getAllOrders(): Flow<List<Order>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrder(order: Order)
-
-    @Update
-    suspend fun updateOrder(order: Order)
+    @Query("DELETE FROM wishlist WHERE medicineId = :medicineId")
+    suspend fun removeFromWishlist(medicineId: String)
 }

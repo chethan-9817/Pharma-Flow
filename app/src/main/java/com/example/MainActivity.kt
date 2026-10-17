@@ -6,66 +6,33 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.AppBottomBar
 import com.example.ui.components.AppDestination
-import com.example.ui.components.AppTopBar
-import com.example.ui.components.ConfettiEffect
+import com.example.ui.components.EvaluatorPresenterBar
 import com.example.ui.screens.CartSheet
+import com.example.ui.screens.EcoDealsScreen
+import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.LiveTrackingScreen
 import com.example.ui.screens.OrderCelebrationDialog
-import com.example.ui.screens.OrderTrackingSheet
-import com.example.ui.screens.OrdersScreen
-import com.example.ui.screens.QuestsScreen
-import com.example.ui.screens.ScratchScreen
-import com.example.ui.screens.ShopScreen
-import com.example.ui.theme.BrandAmber
-import com.example.ui.theme.BrandEmerald
-import com.example.ui.theme.DarkBg
-import com.example.ui.theme.DarkSurfaceElevated
-import com.example.ui.theme.ScratchMartTheme
+import com.example.ui.screens.RewardsScreen
+import com.example.ui.theme.MedLifecycleTheme
+import com.example.ui.theme.MedSlate
 import com.example.ui.viewmodel.StoreViewModel
 
 class MainActivity : ComponentActivity() {
@@ -77,82 +44,81 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            ScratchMartTheme {
-                ScratchMartApp(viewModel = viewModel)
+            MedLifecycleTheme {
+                MedLifecycleApp(viewModel = viewModel)
             }
         }
     }
 }
 
 @Composable
-fun ScratchMartApp(viewModel: StoreViewModel) {
-    var currentDestination by remember { mutableStateOf(AppDestination.SHOP) }
+fun MedLifecycleApp(viewModel: StoreViewModel) {
+    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
     var isCartOpen by remember { mutableStateOf(false) }
 
-    // State collections
-    val products by viewModel.filteredProducts.collectAsStateWithLifecycle()
+    // State collections from ViewModel
+    val medicines by viewModel.filteredMedicines.collectAsStateWithLifecycle()
+    val nearExpiryMedicines by viewModel.nearExpiryMedicines.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val wishlistIds by viewModel.wishlistIds.collectAsStateWithLifecycle()
+    val prescriptionResult by viewModel.prescriptionResult.collectAsStateWithLifecycle()
+    val isScanningRx by viewModel.isScanningRx.collectAsStateWithLifecycle()
+
+    val cartItemsMap by viewModel.cartItems.collectAsStateWithLifecycle()
+    val cartItemsList = cartItemsMap.values.toList()
+
+    val medWalletBalance by viewModel.medWalletBalance.collectAsStateWithLifecycle()
+    val ecoKarmaPoints by viewModel.ecoKarmaPoints.collectAsStateWithLifecycle()
+    val useWalletCashback by viewModel.useWalletCashback.collectAsStateWithLifecycle()
+
+    val latestOrder by viewModel.latestOrder.collectAsStateWithLifecycle()
+    val lastPlacedOrder by viewModel.lastPlacedOrder.collectAsStateWithLifecycle()
+    val isSupabaseLive by viewModel.isSupabaseLive.collectAsStateWithLifecycle()
+
+    val reversePickups by viewModel.reversePickups.collectAsStateWithLifecycle()
     val scratchCards by viewModel.scratchCards.collectAsStateWithLifecycle()
     val unscratchedCount by viewModel.unscratchedCount.collectAsStateWithLifecycle()
-    val availableCoupons by viewModel.availableCoupons.collectAsStateWithLifecycle()
-    val allOrders by viewModel.allOrders.collectAsStateWithLifecycle()
-    val quests by viewModel.quests.collectAsStateWithLifecycle()
     val activeScratchingCard by viewModel.activeScratchingCard.collectAsStateWithLifecycle()
-    val cartItemsMap by viewModel.cartItems.collectAsStateWithLifecycle()
-    val selectedCoupon by viewModel.selectedCoupon.collectAsStateWithLifecycle()
-    val lastCompletedOrder by viewModel.lastCompletedOrder.collectAsStateWithLifecycle()
-    val questRewardWon by viewModel.questRewardWon.collectAsStateWithLifecycle()
-    val wishlistIds by viewModel.wishlistIds.collectAsStateWithLifecycle()
-    val wishlistCount by viewModel.wishlistCount.collectAsStateWithLifecycle()
-    val isSoundEnabled by viewModel.isSoundEnabled.collectAsStateWithLifecycle()
-    val selectedOrderForTracking by viewModel.selectedOrderForTracking.collectAsStateWithLifecycle()
-
-    val cartItemsList = cartItemsMap.values.toList()
-    val cartItemCount = cartItemsList.sumOf { it.quantity }
 
     // Back button handling
-    BackHandler(enabled = isCartOpen || selectedOrderForTracking != null || currentDestination != AppDestination.SHOP) {
-        if (selectedOrderForTracking != null) {
-            viewModel.closeOrderTracking()
-        } else if (isCartOpen) {
+    BackHandler(enabled = isCartOpen || currentDestination != AppDestination.HOME) {
+        if (isCartOpen) {
             isCartOpen = false
-        } else if (currentDestination != AppDestination.SHOP) {
-            currentDestination = AppDestination.SHOP
+        } else if (currentDestination != AppDestination.HOME) {
+            currentDestination = AppDestination.HOME
         }
     }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBg)
+            .background(MedSlate)
             .statusBarsPadding()
             .navigationBarsPadding(),
         topBar = {
-            AppTopBar(
-                searchQuery = searchQuery,
-                onSearchChanged = { viewModel.setSearchQuery(it) },
-                unscratchedCount = unscratchedCount,
-                cartItemCount = cartItemCount,
-                wishlistCount = wishlistCount,
-                isSoundEnabled = isSoundEnabled,
-                onToggleSound = { viewModel.toggleSound() },
-                onWishlistClicked = {
-                    currentDestination = AppDestination.SHOP
-                    viewModel.setSelectedCategory("❤️ Wishlist")
-                },
-                onCartClicked = { isCartOpen = true },
-                onScratchClicked = { currentDestination = AppDestination.SCRATCH }
-            )
+            Column {
+                // Fixed Evaluator Presenter Toolbar docked at the top
+                EvaluatorPresenterBar(
+                    isLiveConnected = isSupabaseLive,
+                    onToggleSyncMode = { viewModel.toggleSupabaseStatus() },
+                    onSimulatePack = { viewModel.simulateChemistPackOrder() },
+                    onSimulateRiderOut = { viewModel.simulateRiderOutForDelivery() },
+                    onSimulateDelivered = { viewModel.simulateRiderMarkDelivered() },
+                    onGrantScratchCard = { viewModel.grantInstantDemoScratchCard() }
+                )
+            }
         },
         bottomBar = {
             AppBottomBar(
                 currentDestination = currentDestination,
                 onDestinationSelected = { currentDestination = it },
-                unscratchedCardsCount = unscratchedCount
+                unscratchedCardsCount = unscratchedCount,
+                nearExpiryCount = nearExpiryMedicines.size,
+                hasActiveDelivery = latestOrder != null && (latestOrder?.currentStage ?: 0) in 1..3
             )
         },
-        containerColor = DarkBg
+        containerColor = MedSlate
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -160,184 +126,110 @@ fun ScratchMartApp(viewModel: StoreViewModel) {
                 .padding(paddingValues)
         ) {
             when (currentDestination) {
-                AppDestination.SHOP -> {
-                    ShopScreen(
-                        products = products,
+                AppDestination.HOME -> {
+                    HomeScreen(
+                        medicines = medicines,
                         wishlistIds = wishlistIds,
                         onToggleWishlist = { viewModel.toggleWishlist(it) },
                         searchQuery = searchQuery,
                         onSearchChange = { viewModel.setSearchQuery(it) },
                         selectedCategory = selectedCategory,
                         onCategoryChange = { viewModel.setSelectedCategory(it) },
-                        onAddToCart = { product ->
-                            viewModel.addToCart(product)
+                        medWalletBalance = medWalletBalance,
+                        prescriptionResult = prescriptionResult,
+                        isScanningRx = isScanningRx,
+                        onSimulateScanRx = { onDone ->
+                            viewModel.simulatePrescriptionScan(onDone)
                         },
-                        onNavigateToScratch = { currentDestination = AppDestination.SCRATCH }
-                    )
-                }
-
-                AppDestination.SCRATCH -> {
-                    ScratchScreen(
-                        cards = scratchCards,
-                        coupons = availableCoupons,
-                        activeCard = activeScratchingCard,
-                        onOpenCard = { viewModel.openScratchModal(it) },
-                        onCloseCard = { viewModel.closeScratchModal() },
-                        onCompleteScratch = { viewModel.completeScratch(it) },
-                        onClaimDailyBonus = { viewModel.claimDailyBonusCard() }
-                    )
-                }
-
-                AppDestination.QUESTS -> {
-                    QuestsScreen(
-                        quests = quests,
-                        onClaimQuest = { questId ->
-                            viewModel.claimQuest(questId)
+                        onAddToCart = { med ->
+                            viewModel.addToCart(med)
+                            isCartOpen = true
+                        },
+                        onNavigateToRewards = {
+                            currentDestination = AppDestination.REWARDS
                         }
                     )
                 }
 
-                AppDestination.ORDERS -> {
-                    OrdersScreen(
-                        orders = allOrders,
-                        onTrackOrder = { order -> viewModel.openOrderTracking(order) },
-                        onStartShopping = { currentDestination = AppDestination.SHOP }
+                AppDestination.ECO_DEALS -> {
+                    EcoDealsScreen(
+                        nearExpiryMedicines = nearExpiryMedicines,
+                        ecoKarmaPoints = ecoKarmaPoints,
+                        reversePickups = reversePickups,
+                        onAddToCart = { med ->
+                            viewModel.addToCart(med)
+                            isCartOpen = true
+                        },
+                        onScheduleDisposal = { count, meds, address, slot ->
+                            viewModel.scheduleReverseDisposal(count, meds, address, slot) {}
+                        }
+                    )
+                }
+
+                AppDestination.TRACK -> {
+                    LiveTrackingScreen(
+                        activeOrder = latestOrder,
+                        onNavigateToHome = { currentDestination = AppDestination.HOME }
+                    )
+                }
+
+                AppDestination.REWARDS -> {
+                    RewardsScreen(
+                        cards = scratchCards,
+                        medWalletBalance = medWalletBalance,
+                        ecoKarmaPoints = ecoKarmaPoints,
+                        activeCard = activeScratchingCard,
+                        onOpenCard = { viewModel.openScratchModal(it) },
+                        onCloseCard = { viewModel.closeScratchModal() },
+                        onCompleteScratch = { viewModel.completeScratch(it) },
+                        onNavigateToHome = { currentDestination = AppDestination.HOME }
                     )
                 }
             }
         }
     }
 
-    // Modal Shopping Cart Sheet
+    // Modal Medicine Shopping Bag Sheet
     if (isCartOpen) {
         CartSheet(
             cartItems = cartItemsList,
-            availableCoupons = availableCoupons,
-            selectedCoupon = selectedCoupon,
             subtotal = viewModel.calculateSubtotal(),
-            discount = viewModel.calculateDiscount(),
-            total = viewModel.calculateTotal(),
+            ecoSavings = viewModel.calculateEcoSavings(),
+            walletDiscount = viewModel.calculateWalletDiscount(),
+            grandTotal = viewModel.calculateGrandTotal(),
+            medWalletBalance = medWalletBalance,
+            useWalletCashback = useWalletCashback,
+            onToggleWalletCashback = { viewModel.toggleWalletCashback() },
+            prescriptionResult = prescriptionResult,
+            onScanRxPrompt = {
+                isCartOpen = false
+                currentDestination = AppDestination.HOME
+            },
             onUpdateQuantity = { id, delta -> viewModel.updateCartQuantity(id, delta) },
             onRemoveItem = { id -> viewModel.removeCartItem(id) },
-            onSelectCoupon = { coupon -> viewModel.selectCoupon(coupon) },
-            onApplyManualPromo = { code -> viewModel.applyManualPromoCode(code) },
-            onCheckout = {
-                viewModel.checkout()
-                isCartOpen = false
+            onCheckout = { method ->
+                viewModel.checkout(method) {
+                    isCartOpen = false
+                }
             },
             onDismiss = { isCartOpen = false }
         )
     }
 
-    // Live Order Tracking Sheet
-    selectedOrderForTracking?.let { order ->
-        OrderTrackingSheet(
-            order = order,
-            onDismiss = { viewModel.closeOrderTracking() }
-        )
-    }
-
-    // Order Checkout Celebration Dialog
-    lastCompletedOrder?.let { order ->
+    // Order Placed Celebration Dialog with Mystery Scratch Card Unlock
+    lastPlacedOrder?.let { order ->
         Dialog(onDismissRequest = { viewModel.dismissOrderCelebration() }) {
             OrderCelebrationDialog(
                 order = order,
-                onDismiss = { viewModel.dismissOrderCelebration() },
-                onNavigateToScratch = {
+                onDismiss = {
                     viewModel.dismissOrderCelebration()
-                    currentDestination = AppDestination.SCRATCH
+                    currentDestination = AppDestination.TRACK
+                },
+                onNavigateToRewards = {
+                    viewModel.dismissOrderCelebration()
+                    currentDestination = AppDestination.REWARDS
                 }
             )
-        }
-    }
-
-    // Quest Reward Won Celebration Dialog
-    questRewardWon?.let { tier ->
-        Dialog(onDismissRequest = { viewModel.dismissQuestReward() }) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(DarkSurfaceElevated)
-                    .border(2.dp, BrandAmber, RoundedCornerShape(24.dp))
-                    .padding(20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                ConfettiEffect()
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = BrandAmber,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "QUEST COMPLETED!",
-                        color = BrandAmber,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "${tier.displayName} Awarded",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "A new mystery scratch voucher has been deposited directly into your vault!",
-                        color = Color(0xFF94A3B8),
-                        fontSize = 12.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.dismissQuestReward()
-                                currentDestination = AppDestination.SCRATCH
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandAmber),
-                            modifier = Modifier.weight(1f).testTag("quest_dialog_scratch_button")
-                        ) {
-                            Text("Scratch Card", color = Color.Black, fontWeight = FontWeight.Bold)
-                        }
-
-                        Button(
-                            onClick = { viewModel.dismissQuestReward() },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
-                            modifier = Modifier.weight(1f).testTag("quest_dialog_close_button")
-                        ) {
-                            Text("Awesome", color = Color.White)
-                        }
-                    }
-                }
-            }
         }
     }
 }

@@ -1,11 +1,10 @@
 package com.example
 
-import com.example.data.model.CardTier
-import com.example.data.model.Coupon
-import com.example.data.model.DiscountType
-import com.example.data.model.FoilStyle
+import com.example.data.model.CartItem
+import com.example.data.model.Medicine
+import com.example.data.model.Order
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -16,46 +15,59 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun testCouponDiscountCalculations() {
-        val percentageCoupon = Coupon(
-            code = "SAVE25",
-            description = "25% off",
-            discountType = DiscountType.PERCENTAGE,
-            discountValue = 25.0,
-            minOrder = 50.0
+    fun testNearExpiryDiscountCalculation() {
+        val nearExpiryMed = Medicine(
+            id = "eco_test",
+            brandName = "Amoxicillin 250mg",
+            genericSalt = "Amoxicillin Trihydrate 250mg",
+            manufacturer = "Cipla",
+            price = 45.0,
+            mrp = 90.0,
+            stock = 10,
+            isNearExpiry = true,
+            expiryDaysLeft = 22,
+            wastePreventedGrams = 42
         )
 
-        val subtotal = 100.0
-        val discount = subtotal * (percentageCoupon.discountValue / 100.0)
-        assertEquals(25.0, discount, 0.001)
-        assertEquals(75.0, subtotal - discount, 0.001)
-
-        val flatCoupon = Coupon(
-            code = "FLAT15",
-            description = "$15 off",
-            discountType = DiscountType.FLAT_AMOUNT,
-            discountValue = 15.0,
-            minOrder = 20.0
-        )
-
-        val subtotal2 = 60.0
-        val discount2 = flatCoupon.discountValue.coerceAtMost(subtotal2)
-        assertEquals(15.0, discount2, 0.001)
-        assertEquals(45.0, subtotal2 - discount2, 0.001)
+        // 50% discount check
+        val discount = nearExpiryMed.mrp - nearExpiryMed.price
+        assertEquals(45.0, discount, 0.001)
+        assertEquals(0.5, discount / nearExpiryMed.mrp, 0.001)
+        assertTrue(nearExpiryMed.isNearExpiry)
+        assertEquals(42, nearExpiryMed.wastePreventedGrams)
     }
 
     @Test
-    fun testCardTierRanges() {
-        assertTrue(CardTier.SILVER.minDiscount >= 10)
-        assertTrue(CardTier.GOLD.minDiscount >= 25)
-        assertTrue(CardTier.DIAMOND.minDiscount >= 50)
+    fun testCartItemCalculations() {
+        val med = Medicine(
+            id = "med_test",
+            brandName = "Dolo 650",
+            genericSalt = "Paracetamol 650mg",
+            manufacturer = "Micro Labs",
+            price = 32.0,
+            mrp = 34.0,
+            stock = 50
+        )
+        val cartItem = CartItem(medicine = med, quantity = 3)
+        val itemTotal = cartItem.medicine.price * cartItem.quantity
+        assertEquals(96.0, itemTotal, 0.001)
     }
 
     @Test
-    fun testFoilStylesAvailable() {
-        assertEquals(3, FoilStyle.values().size)
-        assertNotNull(FoilStyle.HOLOGRAPHIC)
-        assertNotNull(FoilStyle.GOLD_LEAF)
-        assertNotNull(FoilStyle.CYBER_NEON)
+    fun testOrderStagesProgression() {
+        val order = Order(
+            id = "ord_1",
+            orderNumber = "MED-1234",
+            items = "2x Dolo 650",
+            totalAmount = 64.0,
+            status = "ready_for_pickup",
+            currentStage = 2,
+            otp = "4829"
+        )
+
+        assertEquals("MED-1234", order.orderNumber)
+        assertEquals(2, order.currentStage)
+        assertEquals(4, order.otp.length)
+        assertFalse(order.currentStage == 4)
     }
 }

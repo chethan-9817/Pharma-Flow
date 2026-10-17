@@ -1,393 +1,382 @@
 package com.example.data.repository
 
 import com.example.data.local.AppDatabase
-import com.example.data.model.CardTier
-import com.example.data.model.Coupon
-import com.example.data.model.DiscountType
+import com.example.data.model.Medicine
 import com.example.data.model.Order
-import com.example.data.model.Product
-import com.example.data.model.Quest
+import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
 import com.example.data.model.WishlistItem
 import com.example.data.remote.SupabaseClient
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import java.util.UUID
 import kotlin.random.Random
 
 class StoreRepository(private val database: AppDatabase) {
 
-    val allProducts: Flow<List<Product>> = database.productDao().getAllProducts()
+    val allMedicines: Flow<List<Medicine>> = database.medicineDao().getAllMedicines()
+    val nearExpiryMedicines: Flow<List<Medicine>> = database.medicineDao().getNearExpiryMedicines()
+    val allOrders: Flow<List<Order>> = database.orderDao().getAllOrders()
+    val latestOrder: Flow<Order?> = database.orderDao().getLatestOrder()
+    val reversePickups: Flow<List<ReversePickupRequest>> = database.reversePickupDao().getAllPickups()
     val allScratchCards: Flow<List<ScratchCard>> = database.scratchCardDao().getAllScratchCards()
     val unscratchedCardCount: Flow<Int> = database.scratchCardDao().getUnscratchedCount()
-    val allCoupons: Flow<List<Coupon>> = database.couponDao().getAllCoupons()
-    val availableCoupons: Flow<List<Coupon>> = database.couponDao().getAvailableCoupons()
-    val allOrders: Flow<List<Order>> = database.orderDao().getAllOrders()
     val wishlistIds: Flow<List<String>> = database.wishlistDao().getAllWishlistIds()
-    val wishlistCount: Flow<Int> = database.wishlistDao().getWishlistCount()
-
-    private val _quests = MutableStateFlow(getInitialQuests())
-    val quests: StateFlow<List<Quest>> = _quests.asStateFlow()
 
     suspend fun initializeDatabase() {
-        if (database.productDao().getProductCount() == 0) {
-            // Try fetching from Supabase first
-            val remoteProducts = SupabaseClient.fetchProductsFromSupabase()
-            if (!remoteProducts.isNullOrEmpty()) {
-                database.productDao().insertProducts(remoteProducts)
-            } else {
-                database.productDao().insertProducts(getSeedProducts())
-            }
+        if (database.medicineDao().getMedicineCount() == 0) {
+            database.medicineDao().insertMedicines(getSeedMedicines())
 
-            // Seed initial welcome scratch cards
+            // Seed initial scratch cards
             database.scratchCardDao().insertCards(
                 listOf(
-                    createScratchCard(
-                        tier = CardTier.GOLD,
-                        title = "Golden Welcome Scratcher",
-                        subtitle = "Scratch to unlock up to 35% OFF!",
-                        type = DiscountType.PERCENTAGE,
-                        value = 35.0,
-                        code = "WELCOME35"
+                    ScratchCard(
+                        id = "card_1",
+                        title = "MedWallet Cashback Scratcher",
+                        subtitle = "Scratch to claim ₹50 Instant Cashback",
+                        prizeType = "CASHBACK",
+                        prizeValue = 50.0,
+                        couponCode = "CASHBACK50"
                     ),
-                    createScratchCard(
-                        tier = CardTier.SILVER,
-                        title = "Silver Quick Saver",
-                        subtitle = "Scratch to claim $15 flat discount",
-                        type = DiscountType.FLAT_AMOUNT,
-                        value = 15.0,
-                        code = "SILVER15"
+                    ScratchCard(
+                        id = "card_2",
+                        title = "Eco-Karma Green Voucher",
+                        subtitle = "Scratch to unlock 100 Eco-Karma Points",
+                        prizeType = "ECO_POINTS",
+                        prizeValue = 100.0,
+                        couponCode = "ECOKARMA100"
                     ),
-                    createScratchCard(
-                        tier = CardTier.DIAMOND,
-                        title = "Jackpot VIP Mystery",
-                        subtitle = "Mega 50% OFF your entire tech haul!",
-                        type = DiscountType.PERCENTAGE,
-                        value = 50.0,
-                        code = "JACKPOT50"
+                    ScratchCard(
+                        id = "card_3",
+                        title = "Super Saver Pharmacy Coupon",
+                        subtitle = "Flat 25% Off Next Medicine Order",
+                        prizeType = "DISCOUNT_PERCENT",
+                        prizeValue = 25.0,
+                        couponCode = "MED25"
                     )
                 )
             )
 
-            // Seed initial sample order so tracking screen is immediately functional
-            database.orderDao().insertOrder(
-                Order(
-                    id = "seed_order_1",
-                    orderNumber = "ORD-84920",
-                    itemsSummary = "1x AeroPulse Pro ANC Earbuds, 1x SpectraBeam MagSafe Power Bank",
-                    subtotal = 129.98,
-                    discount = 35.0,
-                    total = 94.98,
-                    appliedCouponCode = "WELCOME35",
-                    rewardCardTier = CardTier.GOLD,
-                    timestamp = System.currentTimeMillis() - 86400000L,
-                    status = "Out for Delivery",
-                    currentStage = 3,
-                    carrier = "CyberDrop Express",
-                    trackingCode = "CDX-77491"
-                )
+            // Seed initial active order for evaluator testing
+            val seedOrder = Order(
+                id = "order_mang_101",
+                orderNumber = "MED-9402",
+                customerName = "Chethan K.",
+                items = "1x Dolo 650, 1x Becosules Z",
+                totalAmount = 80.0,
+                ecoSavings = 16.0,
+                status = "ready_for_pickup",
+                currentStage = 2,
+                riderName = "Ramesh K.",
+                riderPhone = "+91 98765 43210",
+                otp = "4829",
+                createdAt = System.currentTimeMillis() - 600000L
             )
-
-            // Seed 1 wishlisted product
-            database.wishlistDao().addToWishlist(WishlistItem("prod_2"))
+            database.orderDao().insertOrder(seedOrder)
+            database.wishlistDao().addToWishlist(WishlistItem("med_1"))
         }
     }
 
-    suspend fun toggleWishlist(productId: String, isCurrentlyWishlisted: Boolean) {
+    suspend fun toggleWishlist(medicineId: String, isCurrentlyWishlisted: Boolean) {
         if (isCurrentlyWishlisted) {
-            database.wishlistDao().removeFromWishlist(productId)
+            database.wishlistDao().removeFromWishlist(medicineId)
         } else {
-            database.wishlistDao().addToWishlist(WishlistItem(productId))
+            database.wishlistDao().addToWishlist(WishlistItem(medicineId))
         }
     }
 
     suspend fun markCardScratched(card: ScratchCard) {
         val updated = card.copy(isScratched = true, scratchedPercentage = 100f)
         database.scratchCardDao().updateCard(updated)
-
-        // Generate and add corresponding coupon to wallet
-        val couponDesc = when (card.discountType) {
-            DiscountType.PERCENTAGE -> "${card.discountValue.toInt()}% OFF any order"
-            DiscountType.FLAT_AMOUNT -> "$${card.discountValue.toInt()} OFF purchase"
-            DiscountType.FREE_SHIPPING -> "Free Express Priority Shipping"
-        }
-        val coupon = Coupon(
-            code = card.couponCode,
-            description = couponDesc,
-            discountType = card.discountType,
-            discountValue = card.discountValue,
-            minOrder = if (card.tier == CardTier.DIAMOND) 60.0 else 25.0
-        )
-        database.couponDao().insertCoupon(coupon)
-
-        // Increment quest progress for scratching
-        updateQuestProgress("quest_scratch_first", 1)
     }
 
-    suspend fun createAndAwardScratchCard(tier: CardTier, reason: String): ScratchCard {
-        val discountValue = when (tier) {
-            CardTier.SILVER -> Random.nextInt(10, 25).toDouble()
-            CardTier.GOLD -> Random.nextInt(25, 45).toDouble()
-            CardTier.DIAMOND -> Random.nextInt(50, 75).toDouble()
-        }
-        val code = "${tier.name.take(3)}${Random.nextInt(100, 999)}"
-        val card = createScratchCard(
-            tier = tier,
-            title = "${tier.displayName} Card",
-            subtitle = "Earned from $reason! Up to ${discountValue.toInt()}% savings",
-            type = DiscountType.PERCENTAGE,
-            value = discountValue,
-            code = code
+    suspend fun addScratchCard(title: String, subtitle: String, prizeType: String, prizeValue: Double, code: String): ScratchCard {
+        val card = ScratchCard(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            subtitle = subtitle,
+            prizeType = prizeType,
+            prizeValue = prizeValue,
+            couponCode = code,
+            isScratched = false,
+            scratchedPercentage = 0f
         )
         database.scratchCardDao().insertCard(card)
         return card
     }
 
     suspend fun placeOrder(
-        itemsSummary: String,
-        subtotal: Double,
-        discount: Double,
-        total: Double,
-        appliedCoupon: Coupon?
+        items: String,
+        totalAmount: Double,
+        ecoSavings: Double,
+        prescriptionUrl: String?
     ): Order {
-        val rewardTier = when {
-            total >= 150.0 -> CardTier.DIAMOND
-            total >= 60.0 -> CardTier.GOLD
-            else -> CardTier.SILVER
-        }
-
         val order = Order(
             id = UUID.randomUUID().toString(),
-            orderNumber = "ORD-${Random.nextInt(10000, 99999)}",
-            itemsSummary = itemsSummary,
-            subtotal = subtotal,
-            discount = discount,
-            total = total,
-            appliedCouponCode = appliedCoupon?.code,
-            rewardCardTier = rewardTier,
-            status = "Processing",
+            orderNumber = "MED-${Random.nextInt(1000, 9999)}",
+            customerName = "Chethan K.",
+            items = items,
+            totalAmount = totalAmount,
+            ecoSavings = ecoSavings,
+            prescriptionUrl = prescriptionUrl,
+            status = "pending",
+            riderName = "Ramesh K.",
+            riderPhone = "+91 98765 43210",
+            otp = "${Random.nextInt(1000, 9999)}",
             currentStage = 1,
-            carrier = "CyberDrop Priority",
-            trackingCode = "CDX-${Random.nextInt(10000, 99999)}"
+            createdAt = System.currentTimeMillis()
         )
 
         database.orderDao().insertOrder(order)
+        SupabaseClient.insertOrderToSupabase(order)
 
-        if (appliedCoupon != null) {
-            database.couponDao().updateCoupon(appliedCoupon.copy(isUsed = true))
-        }
-
-        // Award reward scratch card for placing order
-        createAndAwardScratchCard(rewardTier, "Order ${order.orderNumber}")
-
-        // Update quest progress
-        updateQuestProgress("quest_order_place", 1)
-        if (total >= 50.0) {
-            updateQuestProgress("quest_order_big", 1)
-        }
+        // Award reward scratch card
+        addScratchCard(
+            title = "Order Reward Scratcher",
+            subtitle = "Earned from #${order.orderNumber}! Reveal cashback or points",
+            prizeType = if (Random.nextBoolean()) "CASHBACK" else "ECO_POINTS",
+            prizeValue = if (Random.nextBoolean()) 35.0 else 75.0,
+            code = "REWARD${Random.nextInt(100, 999)}"
+        )
 
         return order
     }
 
-    fun updateQuestProgress(questId: String, increment: Int) {
-        val currentList = _quests.value
-        _quests.value = currentList.map { quest ->
-            if (quest.id == questId && !quest.isClaimed) {
-                val newProg = (quest.currentProgress + increment).coerceAtMost(quest.targetProgress)
-                quest.copy(currentProgress = newProg)
-            } else {
-                quest
-            }
-        }
+    suspend fun updateOrderStatus(orderId: String, status: String, stage: Int) {
+        database.orderDao().updateOrderStatus(orderId, status, stage)
     }
 
-    suspend fun claimQuest(questId: String): CardTier? {
-        val currentList = _quests.value
-        val quest = currentList.find { it.id == questId } ?: return null
-        if (quest.isCompleted && !quest.isClaimed) {
-            _quests.value = currentList.map {
-                if (it.id == questId) it.copy(isClaimed = true) else it
-            }
-            createAndAwardScratchCard(quest.rewardTier, "Quest '${quest.title}'")
-            return quest.rewardTier
-        }
-        return null
-    }
-
-    private fun createScratchCard(
-        tier: CardTier,
-        title: String,
-        subtitle: String,
-        type: DiscountType,
-        value: Double,
-        code: String
-    ): ScratchCard {
-        return ScratchCard(
+    suspend fun scheduleReverseDisposal(
+        stripCount: Int,
+        medicineNames: String,
+        address: String,
+        slot: String
+    ): ReversePickupRequest {
+        val request = ReversePickupRequest(
             id = UUID.randomUUID().toString(),
-            tier = tier,
-            title = title,
-            subtitle = subtitle,
-            discountType = type,
-            discountValue = value,
-            couponCode = code,
-            isScratched = false,
-            scratchedPercentage = 0f
+            stripCount = stripCount,
+            medicineNames = medicineNames,
+            pickupAddress = address,
+            pickupSlot = slot,
+            earnedKarmaPoints = 50,
+            status = "Scheduled"
         )
+        database.reversePickupDao().insertPickup(request)
+
+        // Award bonus scratch card for reverse logistics disposal
+        addScratchCard(
+            title = "Eco-Karma Green Scratcher",
+            subtitle = "Safe medicine return reward! +50 Karma Points",
+            prizeType = "ECO_POINTS",
+            prizeValue = 50.0,
+            code = "GREEN${Random.nextInt(100, 999)}"
+        )
+
+        return request
     }
 
-    private fun getInitialQuests(): List<Quest> {
+    private fun getSeedMedicines(): List<Medicine> {
         return listOf(
-            Quest(
-                id = "quest_scratch_first",
-                title = "Fortune Hunter",
-                description = "Scratch off your first mystery reward card",
-                currentProgress = 0,
-                targetProgress = 1,
-                isClaimed = false,
-                rewardTier = CardTier.GOLD
+            Medicine(
+                id = "med_1",
+                brandName = "Dolo 650",
+                genericSalt = "Paracetamol 650mg",
+                manufacturer = "Micro Labs Ltd.",
+                price = 32.00,
+                mrp = 34.00,
+                stock = 150,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Fever & Pain"
             ),
-            Quest(
-                id = "quest_browse_items",
-                title = "Window Shopper",
-                description = "Explore products in 3 different departments",
-                currentProgress = 1,
-                targetProgress = 3,
-                isClaimed = false,
-                rewardTier = CardTier.SILVER
+            Medicine(
+                id = "med_2",
+                brandName = "Augmentin 625 Duo",
+                genericSalt = "Amoxicillin (500mg) + Clavulanic Acid (125mg)",
+                manufacturer = "GlaxoSmithKline Pharmaceuticals",
+                price = 185.00,
+                mrp = 205.00,
+                stock = 45,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Antibiotics"
             ),
-            Quest(
-                id = "quest_order_place",
-                title = "Smart Shopper",
-                description = "Complete any checkout purchase",
-                currentProgress = 0,
-                targetProgress = 1,
-                isClaimed = false,
-                rewardTier = CardTier.GOLD
+            Medicine(
+                id = "med_3",
+                brandName = "Azithral 500",
+                genericSalt = "Azithromycin 500mg",
+                manufacturer = "Alembic Pharmaceuticals",
+                price = 115.00,
+                mrp = 132.00,
+                stock = 60,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Antibiotics"
             ),
-            Quest(
-                id = "quest_order_big",
-                title = "High Roller",
-                description = "Place a haul order of $50 or more",
-                currentProgress = 0,
-                targetProgress = 1,
-                isClaimed = false,
-                rewardTier = CardTier.DIAMOND
-            )
-        )
-    }
-
-    private fun getSeedProducts(): List<Product> {
-        return listOf(
-            Product(
-                id = "prod_1",
-                title = "AeroPulse Pro ANC Earbuds",
-                description = "Studio-grade active noise cancellation with 48h spatial audio battery life.",
-                category = "Audio",
-                price = 89.99,
-                originalPrice = 129.99,
-                rating = 4.8f,
-                reviewCount = 284,
-                badge = "HOT",
-                iconKey = "headphones"
+            Medicine(
+                id = "med_4",
+                brandName = "Becosules Z",
+                genericSalt = "B-Complex Forte + Vitamin C + Zinc",
+                manufacturer = "Pfizer Ltd.",
+                price = 48.00,
+                mrp = 55.00,
+                stock = 180,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Capsule",
+                category = "Vitamins"
             ),
-            Product(
-                id = "prod_2",
-                title = "CyberChronos Smartwatch Ultra",
-                description = "Titanium bezel, ECG biosensors, always-on AMOLED with 14-day stamina.",
-                category = "Wearables",
-                price = 149.99,
-                originalPrice = 199.99,
-                rating = 4.9f,
-                reviewCount = 512,
-                badge = "POPULAR",
-                iconKey = "watch"
+            Medicine(
+                id = "med_5",
+                brandName = "Glycomet GP 1",
+                genericSalt = "Glimepiride 1mg + Metformin 500mg",
+                manufacturer = "USV Pvt. Ltd.",
+                price = 124.00,
+                mrp = 145.00,
+                stock = 75,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Diabetes"
             ),
-            Product(
-                id = "prod_3",
-                title = "NovaMech RGB 75% Keyboard",
-                description = "Hot-swappable tactile switches, gasket mounted, wireless tri-mode connection.",
-                category = "Gaming",
-                price = 74.50,
-                originalPrice = 99.00,
-                rating = 4.7f,
-                reviewCount = 189,
-                badge = "TRENDING",
-                iconKey = "keyboard"
+            Medicine(
+                id = "med_6",
+                brandName = "Pan-D",
+                genericSalt = "Pantoprazole 40mg + Domperidone 30mg",
+                manufacturer = "Alkem Laboratories",
+                price = 142.00,
+                mrp = 165.00,
+                stock = 90,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Capsule",
+                category = "Gastric"
             ),
-            Product(
-                id = "prod_4",
-                title = "AeroFalcon 4K Mini Drone",
-                description = "3-axis gimbal, obstacle avoidance, GPS return, ultra-compact foldable wings.",
-                category = "Tech",
-                price = 229.00,
-                originalPrice = 299.99,
-                rating = 4.6f,
-                reviewCount = 94,
-                badge = "FLASH DEAL",
-                iconKey = "drone"
+            Medicine(
+                id = "med_7",
+                brandName = "Allegra 120mg",
+                genericSalt = "Fexofenadine Hydrochloride 120mg",
+                manufacturer = "Sanofi India Ltd.",
+                price = 165.00,
+                mrp = 190.00,
+                stock = 40,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Fever & Pain"
             ),
-            Product(
-                id = "prod_5",
-                title = "RetroBit Pixel Handheld Arcade",
-                description = "Over 10,000 classic retro titles on a crisp 3.5\" IPS screen with stereo sound.",
-                category = "Gaming",
+            Medicine(
+                id = "med_8",
+                brandName = "Shelcal 500",
+                genericSalt = "Calcium 500mg + Vitamin D3 250 IU",
+                manufacturer = "Torrent Pharmaceuticals",
+                price = 88.00,
+                mrp = 105.00,
+                stock = 120,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Vitamins"
+            ),
+            Medicine(
+                id = "med_9",
+                brandName = "Telma 40",
+                genericSalt = "Telmisartan 40mg",
+                manufacturer = "Glenmark Pharmaceuticals",
+                price = 130.00,
+                mrp = 152.00,
+                stock = 85,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Cardio"
+            ),
+            Medicine(
+                id = "med_10",
+                brandName = "Volini Pain Relief Gel",
+                genericSalt = "Diclofenac Diethylamine + Linseed Oil",
+                manufacturer = "Sun Pharma",
+                price = 75.00,
+                mrp = 90.00,
+                stock = 65,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Gel",
+                category = "First Aid"
+            ),
+            Medicine(
+                id = "med_11",
+                brandName = "Betadine 10% Ointment",
+                genericSalt = "Povidone Iodine 10% w/w",
+                manufacturer = "Win-Medicare Ltd.",
+                price = 65.00,
+                mrp = 78.00,
+                stock = 110,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Ointment",
+                category = "First Aid"
+            ),
+            Medicine(
+                id = "med_12",
+                brandName = "Neurobion Forte",
+                genericSalt = "Vitamin B-Complex + B12",
+                manufacturer = "Procter & Gamble Hygiene",
+                price = 38.00,
+                mrp = 42.00,
+                stock = 200,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Vitamins"
+            ),
+            // Near-Expiry 50% Eco-Clearance Batches
+            Medicine(
+                id = "eco_1",
+                brandName = "Amoxicillin 250mg (Eco-Clearance)",
+                genericSalt = "Amoxicillin Trihydrate 250mg",
+                manufacturer = "Cipla Ltd. • BATCH-EXP22",
                 price = 45.00,
-                originalPrice = 65.00,
-                rating = 4.8f,
-                reviewCount = 430,
-                badge = "BESTSELLER",
-                iconKey = "gamepad"
+                mrp = 90.00, // 50% discount
+                stock = 18,
+                requiresRx = true,
+                isNearExpiry = true,
+                expiryDaysLeft = 22,
+                dosageForm = "Capsule",
+                category = "Antibiotics",
+                wastePreventedGrams = 42
             ),
-            Product(
-                id = "prod_6",
-                title = "SpectraBeam MagSafe Power Bank",
-                description = "10,000mAh with transparent cyber casing and dynamic wattage readout display.",
-                category = "Tech",
-                price = 39.99,
-                originalPrice = 54.99,
-                rating = 4.7f,
-                reviewCount = 156,
-                badge = "",
-                iconKey = "battery"
+            Medicine(
+                id = "eco_2",
+                brandName = "Celin 500 Chewable (Eco-Clearance)",
+                genericSalt = "Vitamin C (Ascorbic Acid) 500mg",
+                manufacturer = "GlaxoSmithKline • BATCH-EXP18",
+                price = 19.00,
+                mrp = 38.00, // 50% discount
+                stock = 25,
+                requiresRx = false,
+                isNearExpiry = true,
+                expiryDaysLeft = 18,
+                dosageForm = "Tablet",
+                category = "Vitamins",
+                wastePreventedGrams = 30
             ),
-            Product(
-                id = "prod_7",
-                title = "Vortex 4K Action Cam 60FPS",
-                description = "Waterproof rugged housing, dual touchscreens, horizon lock stabilization.",
-                category = "Tech",
-                price = 119.00,
-                originalPrice = 169.00,
-                rating = 4.5f,
-                reviewCount = 88,
-                badge = "NEW",
-                iconKey = "camera"
-            ),
-            Product(
-                id = "prod_8",
-                title = "NeonDrift Gaming Mouse Pro",
-                description = "Ultralight 52g honeycomb chassis, 26,000 DPI optical sensor, PTFE skates.",
-                category = "Gaming",
-                price = 34.99,
-                originalPrice = 49.99,
-                rating = 4.6f,
-                reviewCount = 220,
-                badge = "",
-                iconKey = "mouse"
-            ),
-            Product(
-                id = "prod_9",
-                title = "SonicBoom 360 Waterproof Speaker",
-                description = "Deep punchy bass, party link broadcast mode, IPX7 floatable submersible build.",
-                category = "Audio",
-                price = 59.99,
-                originalPrice = 79.99,
-                rating = 4.7f,
-                reviewCount = 310,
-                badge = "DEAL",
-                iconKey = "speaker"
+            Medicine(
+                id = "eco_3",
+                brandName = "Metformin 500 SR (Eco-Clearance)",
+                genericSalt = "Metformin Hydrochloride 500mg",
+                manufacturer = "Sun Pharma • BATCH-EXP26",
+                price = 28.00,
+                mrp = 56.00, // 50% discount
+                stock = 14,
+                requiresRx = true,
+                isNearExpiry = true,
+                expiryDaysLeft = 26,
+                dosageForm = "Tablet",
+                category = "Diabetes",
+                wastePreventedGrams = 55
             )
         )
     }

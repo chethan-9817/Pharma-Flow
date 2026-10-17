@@ -6,45 +6,21 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:translateX="14"
-        android:translateY="14">
-        <!-- Ticket Base with Golden Gradient -->
+        android:translateX="18"
+        android:translateY="18">
+        <!-- Medical Shield Base -->
         <path
-            android:pathData="M16,12 L64,12 C68.4,12 72,15.6 72,20 L72,32 C68,32 64,36 64,40 C64,44 68,48 72,48 L72,60 C72,64.4 68.4,68 64,68 L16,68 C11.6,68 8,64.4 8,60 L8,48 C12,48 16,44 16,40 C16,36 12,32 8,32 L8,20 C8,15.6 11.6,12 16,12 Z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:startX="8"
-                    android:startY="12"
-                    android:endX="72"
-                    android:endY="68"
-                    android:type="linear">
-                    <item android:color="#F59E0B" android:offset="0.0" />
-                    <item android:color="#FBBF24" android:offset="0.5" />
-                    <item android:color="#D97706" android:offset="1.0" />
-                </gradient>
-            </aapt:attr>
-        </path>
+            android:fillColor="#FFFFFF"
+            android:pathData="M36,4 L64,14 C64,44 48,60 36,68 C24,60 8,44 8,14 Z" />
 
-        <!-- Scratch-off reveal inner card -->
+        <!-- Medical Cross Inset -->
         <path
-            android:fillColor="#1E293B"
-            android:pathData="M24,22 L56,22 C58.2,22 60,23.8 60,26 L60,54 C60,56.2 58.2,58 56,58 L24,58 C21.8,58 20,56.2 20,54 L20,26 C20,23.8 21.8,22 24,22 Z" />
+            android:fillColor="#0284C7"
+            android:pathData="M32,20 H40 V30 H50 V38 H40 V48 H32 V38 H22 V30 H32 Z" />
 
-        <!-- Star Sparkle 1 -->
+        <!-- Eco Leaf Accent -->
         <path
             android:fillColor="#10B981"
-            android:pathData="M40,28 L42,35 L49,37 L42,39 L40,46 L38,39 L31,37 L38,35 Z" />
-
-        <!-- Gift / Percentage Symbol -->
-        <path
-            android:fillColor="#34D399"
-            android:pathData="M32,48 C30.9,48 30,47.1 30,46 C30,44.9 30.9,44 32,44 C33.1,44 34,44.9 34,46 C34,47.1 33.1,48 32,48 Z M48,54 C46.9,54 46,53.1 46,52 C46,50.9 46.9,50 48,50 C49.1,50 50,50.9 50,52 C50,53.1 49.1,54 48,54 Z M33,54 L47,44"
-            android:strokeWidth="2.5"
-            android:strokeColor="#34D399" />
-
-        <!-- Top Accent Sparkle -->
-        <path
-            android:fillColor="#FDE68A"
-            android:pathData="M62,14 L63.5,19 L68.5,20.5 L63.5,22 L62,27 L60.5,22 L55.5,20.5 L60.5,19 Z" />
+            android:pathData="M44,14 C54,14 62,22 62,32 C52,32 44,24 44,14 Z" />
     </group>
 </vector>

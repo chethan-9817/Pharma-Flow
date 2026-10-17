@@ -2,38 +2,44 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Brand Core Colors
-val BrandEmerald = Color(0xFF10B981)
-val BrandEmeraldDark = Color(0xFF059669)
-val BrandEmeraldLight = Color(0xFF6EE7B7)
+// Medical Theme Core Colors
+val MedicalBlue = Color(0xFF0284C7)
+val MedicalBlueDark = Color(0xFF0369A1)
+val MedicalBlueLight = Color(0xFFE0F2FE)
+val MedicalNavy = Color(0xFF0F172A)
 
-val BrandAmber = Color(0xFFF59E0B)
-val BrandAmberDark = Color(0xFFD97706)
-val BrandAmberLight = Color(0xFFFCD34D)
+// Eco-Savings & Near-Expiry Colors
+val EcoEmerald = Color(0xFF10B981)
+val EcoEmeraldDark = Color(0xFF059669)
+val EcoEmeraldLight = Color(0xFFD1FAE5)
 
-val BrandCyan = Color(0xFF06B6D4)
-val BrandPurple = Color(0xFF8B5CF6)
+// Expiry Alert & Badges
+val ExpiryAmber = Color(0xFFF59E0B)
+val ExpiryAmberDark = Color(0xFFD97706)
+val ExpiryAmberLight = Color(0xFFFEF3C7)
 
-// Dark Theme Surfaces
-val DarkBg = Color(0xFF0B0F19)
-val DarkSurface = Color(0xFF151D2F)
-val DarkSurfaceElevated = Color(0xFF1E293B)
-val DarkBorder = Color(0xFF334155)
-val DarkTextPrimary = Color(0xFFF8FAFC)
-val DarkTextSecondary = Color(0xFF94A3B8)
+// Schedule-H Prescription Badge
+val RxViolet = Color(0xFF8B5CF6)
+val RxVioletLight = Color(0xFFEDE9FE)
 
-// Light Theme Surfaces
-val LightBg = Color(0xFFF8FAFC)
-val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceElevated = Color(0xFFF1F5F9)
-val LightBorder = Color(0xFFE2E8F0)
-val LightTextPrimary = Color(0xFF0F172A)
-val LightTextSecondary = Color(0xFF64748B)
+// Clean Light Surfaces
+val MedWhite = Color(0xFFFFFFFF)
+val MedSlate = Color(0xFFF8FAFC)
+val MedSurfaceElevated = Color(0xFFF1F5F9)
+val MedBorder = Color(0xFFE2E8F0)
+val MedTextPrimary = Color(0xFF0F172A)
+val MedTextSecondary = Color(0xFF64748B)
+val MedTextMuted = Color(0xFF94A3B8)
 
-// Scratch Card Tier Colors
-val FoilSilver = Color(0xFF94A3B8)
-val FoilSilverAccent = Color(0xFFCBD5E1)
-val FoilGold = Color(0xFFF59E0B)
-val FoilGoldAccent = Color(0xFFFDE68A)
-val FoilDiamond = Color(0xFF06B6D4)
-val FoilDiamondAccent = Color(0xFFA5F3FC)
+// Scratch Card Foil Gradients
+val FoilBlueStart = Color(0xFF0284C7)
+val FoilBlueMid = Color(0xFF38BDF8)
+val FoilBlueEnd = Color(0xFF0369A1)
+
+val FoilEcoStart = Color(0xFF10B981)
+val FoilEcoMid = Color(0xFF34D399)
+val FoilEcoEnd = Color(0xFF059669)
+
+val FoilGoldStart = Color(0xFFF59E0B)
+val FoilGoldMid = Color(0xFFFCD34D)
+val FoilGoldEnd = Color(0xFFB45309)

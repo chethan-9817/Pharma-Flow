@@ -4,21 +4,11 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,31 +24,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,73 +58,60 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.CardTier
-import com.example.data.model.DiscountType
-import com.example.data.model.FoilStyle
 import com.example.data.model.ScratchCard
 import com.example.ui.audio.SoundManager
-import com.example.ui.theme.BrandAmber
-import com.example.ui.theme.BrandCyan
-import com.example.ui.theme.BrandEmerald
-import com.example.ui.theme.FoilDiamond
-import com.example.ui.theme.FoilDiamondAccent
-import com.example.ui.theme.FoilGold
-import com.example.ui.theme.FoilGoldAccent
-import com.example.ui.theme.FoilSilver
-import com.example.ui.theme.FoilSilverAccent
-import kotlinx.coroutines.launch
+import com.example.ui.theme.EcoEmerald
+import com.example.ui.theme.EcoEmeraldDark
+import com.example.ui.theme.EcoEmeraldLight
+import com.example.ui.theme.ExpiryAmber
+import com.example.ui.theme.ExpiryAmberLight
+import com.example.ui.theme.FoilBlueEnd
+import com.example.ui.theme.FoilBlueMid
+import com.example.ui.theme.FoilBlueStart
+import com.example.ui.theme.MedBorder
+import com.example.ui.theme.MedSlate
+import com.example.ui.theme.MedTextPrimary
+import com.example.ui.theme.MedTextSecondary
+import com.example.ui.theme.MedWhite
+import com.example.ui.theme.MedicalBlue
+import com.example.ui.theme.MedicalBlueLight
 import kotlin.math.sqrt
 
 @Composable
-fun ScratchCardView(
+fun ScratchCardModalView(
     card: ScratchCard,
     onCompleted: () -> Unit,
     onDismiss: () -> Unit,
+    onApplyToCart: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     val vibrator = remember { context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator }
-    val scope = rememberCoroutineScope()
 
     var isRevealed by remember { mutableStateOf(card.isScratched) }
     var scratchPercentage by remember { mutableFloatStateOf(if (card.isScratched) 100f else 0f) }
-    var copiedToClipboard by remember { mutableStateOf(false) }
-    var selectedFoilStyle by remember {
-        mutableStateOf(
-            when (card.tier) {
-                CardTier.DIAMOND -> FoilStyle.HOLOGRAPHIC
-                CardTier.GOLD -> FoilStyle.GOLD_LEAF
-                CardTier.SILVER -> FoilStyle.CYBER_NEON
-            }
-        )
-    }
 
-    // Brush touch paths
     val touchPoints = remember { mutableStateListOf<Offset>() }
     val currentPath = remember { Path() }
-    var dragTickCount by remember { mutableIntStateOf(0) }
 
-    // Sample points grid for accurate scratch percentage calculation
-    val gridRows = 12
-    val gridCols = 16
+    // 16x16 grid for sampling transparent pixel coverage
+    val gridRows = 14
+    val gridCols = 14
     val scratchedCells = remember { mutableSetOf<Int>() }
 
-    fun triggerHapticAndSound() {
+    fun triggerFeedback() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator?.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(12)
+                vibrator?.vibrate(10)
             }
         } catch (_: Exception) {}
         SoundManager.playScratchSound()
@@ -151,453 +121,343 @@ fun ScratchCardView(
         if (!isRevealed) {
             isRevealed = true
             scratchPercentage = 100f
-            triggerHapticAndSound()
+            triggerFeedback()
             SoundManager.playRevealSound()
             onCompleted()
         }
     }
 
-    // Dynamic foil color brushes based on selected FoilStyle
-    val foilColors = when (selectedFoilStyle) {
-        FoilStyle.HOLOGRAPHIC -> listOf(
-            Color(0xFFEC4899), // Pink
-            Color(0xFF8B5CF6), // Violet
-            Color(0xFF06B6D4), // Cyan
-            Color(0xFF10B981), // Emerald
-            Color(0xFFFBBF24), // Amber
-            Color(0xFFEC4899)  // Loop
-        )
-        FoilStyle.GOLD_LEAF -> listOf(
-            FoilGoldAccent,
-            FoilGold,
-            Color(0xFFB45309),
-            FoilGoldAccent
-        )
-        FoilStyle.CYBER_NEON -> listOf(
-            Color(0xFF06B6D4),
-            Color(0xFF0F172A),
-            Color(0xFF8B5CF6),
-            Color(0xFF0284C7)
-        )
-    }
+    val metallicBlueFoil = listOf(FoilBlueStart, FoilBlueMid, Color(0xFF0369A1), FoilBlueStart)
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFF131B2E))
-            .border(2.dp, foilColors.first().copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
+        // Header
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header: Tier & Progress
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                color = MedicalBlueLight,
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Surface(
-                    color = foilColors[1].copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, foilColors[1].copy(alpha = 0.4f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = foilColors[1],
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = card.tier.displayName.uppercase(),
-                            color = foilColors[1],
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-
                 Text(
-                    text = if (isRevealed) "100% Revealed!" else "${scratchPercentage.toInt()}% Scratched",
-                    color = if (isRevealed) BrandEmerald else Color(0xFF94A3B8),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp
+                    text = "MEDWALLET SCRATCH DROP",
+                    color = MedicalBlue,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (isRevealed) "100% Uncovered!" else "${scratchPercentage.toInt()}% Scratched",
+                color = if (isRevealed) EcoEmeraldDark else MedTextSecondary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
+        }
 
-            // Foil Style Selector Tabs (Only if not yet fully scratched)
-            if (!isRevealed) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Progress Bar
+        val animatedProgress by animateFloatAsState(
+            targetValue = (scratchPercentage / 100f).coerceIn(0f, 1f),
+            label = "scratch_bar"
+        )
+        LinearProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(CircleShape),
+            color = MedicalBlue,
+            trackColor = MedBorder
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 280px x 280px Interactive Canvas Area
+        Box(
+            modifier = Modifier
+                .size(280.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .border(2.dp, MedicalBlue.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                .testTag("interactive_scratch_canvas"),
+            contentAlignment = Alignment.Center
+        ) {
+            // Bottom Hidden Prize Layer
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(listOf(MedicalBlueLight, MedWhite))
+                    )
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    FoilStyle.values().forEach { style ->
-                        val isSelected = style == selectedFoilStyle
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) BrandEmerald.copy(alpha = 0.2f) else Color(0xFF1E293B),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (isSelected) BrandEmerald else Color(0xFF334155)
-                            ),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedFoilStyle = style }
-                        ) {
-                            Text(
-                                text = style.displayName.split(" ")[0],
-                                color = if (isSelected) BrandEmerald else Color(0xFF94A3B8),
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 4.dp)
+                    Surface(
+                        shape = CircleShape,
+                        color = when (card.prizeType) {
+                            "ECO_POINTS" -> EcoEmeraldLight
+                            "CASHBACK" -> MedicalBlueLight
+                            else -> ExpiryAmberLight
+                        },
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = when (card.prizeType) {
+                                    "ECO_POINTS" -> Icons.Default.Eco
+                                    "CASHBACK" -> Icons.Default.AccountBalanceWallet
+                                    else -> Icons.Default.LocalOffer
+                                },
+                                contentDescription = null,
+                                tint = when (card.prizeType) {
+                                    "ECO_POINTS" -> EcoEmeraldDark
+                                    "CASHBACK" -> MedicalBlue
+                                    else -> ExpiryAmber
+                                },
+                                modifier = Modifier.size(32.dp)
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val prizeHeading = when (card.prizeType) {
+                        "CASHBACK" -> "₹${card.prizeValue.toInt()} CASHBACK"
+                        "ECO_POINTS" -> "+${card.prizeValue.toInt()} ECO-KARMA"
+                        "DISCOUNT_PERCENT" -> "${card.prizeValue.toInt()}% OFF"
+                        else -> "FREE PRIORITY DELIVERY"
+                    }
+
+                    Text(
+                        text = prizeHeading,
+                        color = MedicalBlue,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 22.sp,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = card.title,
+                        color = MedTextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MedWhite,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MedBorder)
+                    ) {
+                        Text(
+                            text = "CODE: ${card.couponCode}",
+                            color = MedTextSecondary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Percentage Bar
-            val animatedProgress by animateFloatAsState(
-                targetValue = (scratchPercentage / 100f).coerceIn(0f, 1f),
-                animationSpec = spring(stiffness = Spring.StiffnessLow),
-                label = "progress"
-            )
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape),
-                color = foilColors[1],
-                trackColor = Color(0xFF1E293B)
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Scratch Card Canvas Area
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(210.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .testTag("scratch_canvas_card"),
-                contentAlignment = Alignment.Center
-            ) {
-                // 1. Prize Artwork Layer (Base)
-                Box(
+            // Top Metallic Foil Layer (Destination-Out Clear touch erasing)
+            if (!isRevealed) {
+                Canvas(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))
-                            )
-                        )
-                        .border(1.5.dp, BrandEmerald.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = BrandEmerald.copy(alpha = 0.15f),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.LocalOffer,
-                                    contentDescription = null,
-                                    tint = BrandEmerald,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
+                        .pointerInput(card.id) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    touchPoints.add(offset)
+                                    currentPath.moveTo(offset.x, offset.y)
+                                    triggerFeedback()
+                                },
+                                onDrag = { change, _ ->
+                                    val pos = change.position
+                                    touchPoints.add(pos)
+                                    currentPath.lineTo(pos.x, pos.y)
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                    // 32px erasing circle radius math
+                                    val cellW = size.width / gridCols
+                                    val cellH = size.height / gridRows
+                                    val brushRadius = 55f // approx 32px scaled
 
-                        val discountHeading = when (card.discountType) {
-                            DiscountType.PERCENTAGE -> "${card.discountValue.toInt()}% OFF"
-                            DiscountType.FLAT_AMOUNT -> "$${card.discountValue.toInt()} OFF"
-                            DiscountType.FREE_SHIPPING -> "FREE SHIPPING"
-                        }
-                        Text(
-                            text = discountHeading,
-                            color = BrandEmerald,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 32.sp,
-                            letterSpacing = 1.sp
-                        )
-
-                        Text(
-                            text = card.title,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Coupon Code Chip
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFF0B0F19),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155))
-                        ) {
-                            Text(
-                                text = "CODE: ${card.couponCode}",
-                                color = BrandAmber,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-
-                // 2. Interactive Foil Layer (Canvas with BlendMode.Clear destination-out)
-                if (!isRevealed) {
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(card.id, selectedFoilStyle) {
-                                detectDragGestures(
-                                    onDragStart = { offset ->
-                                        touchPoints.add(offset)
-                                        currentPath.moveTo(offset.x, offset.y)
-                                        triggerHapticAndSound()
-                                    },
-                                    onDrag = { change, _ ->
-                                        val pos = change.position
-                                        touchPoints.add(pos)
-                                        currentPath.lineTo(pos.x, pos.y)
-
-                                        dragTickCount++
-                                        if (dragTickCount % 3 == 0) {
-                                            SoundManager.playScratchSound()
-                                        }
-
-                                        // Calculate grid coverage
-                                        val cellW = size.width / gridCols
-                                        val cellH = size.height / gridRows
-                                        val brushRadius = 55f
-
-                                        for (r in 0 until gridRows) {
-                                            for (c in 0 until gridCols) {
-                                                val cellIndex = r * gridCols + c
-                                                if (cellIndex !in scratchedCells) {
-                                                    val cellCenterX = c * cellW + (cellW / 2)
-                                                    val cellCenterY = r * cellH + (cellH / 2)
-                                                    val dist = sqrt(
-                                                        (pos.x - cellCenterX) * (pos.x - cellCenterX) +
-                                                                (pos.y - cellCenterY) * (pos.y - cellCenterY)
-                                                    )
-                                                    if (dist < brushRadius) {
-                                                        scratchedCells.add(cellIndex)
-                                                    }
+                                    for (r in 0 until gridRows) {
+                                        for (c in 0 until gridCols) {
+                                            val cellIndex = r * gridCols + c
+                                            if (cellIndex !in scratchedCells) {
+                                                val cx = c * cellW + (cellW / 2)
+                                                val cy = r * cellH + (cellH / 2)
+                                                val dist = sqrt((pos.x - cx) * (pos.x - cx) + (pos.y - cy) * (pos.y - cy))
+                                                if (dist < brushRadius) {
+                                                    scratchedCells.add(cellIndex)
                                                 }
                                             }
                                         }
-
-                                        val totalCells = gridRows * gridCols
-                                        val pct = (scratchedCells.size.toFloat() / totalCells) * 100f
-                                        scratchPercentage = pct.coerceIn(0f, 100f)
-
-                                        if (pct >= 45f) {
-                                            revealPrize()
-                                        }
                                     }
-                                )
-                            }
-                    ) {
-                        val canvasW = size.width
-                        val canvasH = size.height
 
-                        drawIntoCanvas { canvas ->
-                            val bounds = Rect(0f, 0f, canvasW, canvasH)
-                            val foilPaint = Paint()
+                                    val pct = (scratchedCells.size.toFloat() / (gridRows * gridCols)) * 100f
+                                    scratchPercentage = pct.coerceIn(0f, 100f)
 
-                            canvas.saveLayer(bounds, foilPaint)
-
-                            // Draw selected metallic foil gradient
-                            drawRect(
-                                brush = Brush.linearGradient(
-                                    colors = foilColors,
-                                    start = Offset(0f, 0f),
-                                    end = Offset(canvasW, canvasH)
-                                ),
-                                size = size
-                            )
-
-                            // Metallic Texture Glints
-                            val step = 26f
-                            var x = 0f
-                            while (x < canvasW + canvasH) {
-                                drawLine(
-                                    color = Color.White.copy(alpha = 0.15f),
-                                    start = Offset(x, 0f),
-                                    end = Offset(0f, x),
-                                    strokeWidth = 1.8f
-                                )
-                                x += step
-                            }
-
-                            // Erase touched points using destination-out Clear
-                            val clearPaint = Paint().apply {
-                                blendMode = BlendMode.Clear
-                                style = PaintingStyle.Stroke
-                                strokeWidth = 65f
-                                strokeCap = StrokeCap.Round
-                                strokeJoin = StrokeJoin.Round
-                            }
-
-                            canvas.drawPath(currentPath, clearPaint)
-
-                            // Also draw circles at all sampled touch points to avoid gaps
-                            for (pt in touchPoints) {
-                                canvas.drawCircle(pt, 32f, clearPaint)
-                            }
-
-                            canvas.restore()
-                        }
-                    }
-
-                    // Scratch Guide Overlay
-                    if (scratchPercentage < 10f) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = Color.Black.copy(alpha = 0.6f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = null,
-                                        tint = BrandAmber,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "DRAG FINGER TO SCRATCH FOIL",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
-                                    )
+                                    // Auto reveal once >40% scratched
+                                    if (pct > 40f) {
+                                        revealPrize()
+                                    } else {
+                                        triggerFeedback()
+                                    }
                                 }
-                            }
+                            )
                         }
+                ) {
+                    val w = size.width
+                    val h = size.height
+
+                    drawIntoCanvas { canvas ->
+                        val bounds = Rect(0f, 0f, w, h)
+                        val foilPaint = Paint()
+
+                        canvas.saveLayer(bounds, foilPaint)
+
+                        // Draw metallic medical-blue pattern
+                        drawRect(
+                            brush = Brush.linearGradient(
+                                colors = metallicBlueFoil,
+                                start = Offset(0f, 0f),
+                                end = Offset(w, h)
+                            ),
+                            size = size
+                        )
+
+                        // Shimmer lines
+                        val step = 28f
+                        var x = 0f
+                        while (x < w + h) {
+                            drawLine(
+                                color = Color.White.copy(alpha = 0.2f),
+                                start = Offset(x, 0f),
+                                end = Offset(0f, x),
+                                strokeWidth = 2f
+                            )
+                            x += step
+                        }
+
+                        // Erase transparent pixels along path
+                        val clearPaint = Paint().apply {
+                            blendMode = BlendMode.Clear
+                            style = PaintingStyle.Stroke
+                            strokeWidth = 64f // 32px radius
+                            strokeCap = StrokeCap.Round
+                            strokeJoin = StrokeJoin.Round
+                        }
+
+                        canvas.drawPath(currentPath, clearPaint)
+
+                        for (pt in touchPoints) {
+                            canvas.drawCircle(pt, 32f, clearPaint)
+                        }
+
+                        canvas.restore()
                     }
                 }
 
-                // Confetti particle burst overlay on complete
-                if (isRevealed) {
-                    ConfettiEffect()
+                // Scratch Instruction Text
+                if (scratchPercentage < 10f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.Black.copy(alpha = 0.6f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "Scratch Here with Finger or Mouse",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Confetti on win
+            if (isRevealed) {
+                ConfettiEffect()
+            }
+        }
 
-            // Action Buttons
-            if (!isRevealed) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Actions
+        if (!isRevealed) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f).testTag("cancel_scratch_button")
-                    ) {
-                        Text("Save for Later")
-                    }
-
-                    Button(
-                        onClick = { revealPrize() },
-                        colors = ButtonDefaults.buttonColors(containerColor = foilColors[1]),
-                        modifier = Modifier.weight(1f).testTag("instant_reveal_button")
-                    ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Quick Reveal", fontWeight = FontWeight.Bold, color = Color.Black)
-                    }
+                    Text("Later", color = MedTextSecondary)
                 }
-            } else {
-                // Revealed Success Actions
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+
+                Button(
+                    onClick = { revealPrize() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MedicalBlue),
+                    modifier = Modifier.weight(1f).testTag("quick_reveal_scratch_button")
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = BrandEmerald,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Reward Saved to Your Wallet!",
-                            color = BrandEmerald,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Quick Reveal", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EcoEmerald, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Reward Credited to MedWallet!",
+                        color = EcoEmeraldDark,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                clipboardManager.setText(AnnotatedString(card.couponCode))
-                                copiedToClipboard = true
-                            },
-                            modifier = Modifier.weight(1f).testTag("copy_code_button")
-                        ) {
-                            Icon(
-                                if (copiedToClipboard) Icons.Default.CheckCircle else Icons.Default.ContentCopy,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (copiedToClipboard) "Copied!" else "Copy Code")
-                        }
-
-                        Button(
-                            onClick = onDismiss,
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald),
-                            modifier = Modifier.weight(1f).testTag("use_in_shop_button")
-                        ) {
-                            Text("Use in Shop", fontWeight = FontWeight.Bold, color = Color.Black)
-                        }
-                    }
+                Button(
+                    onClick = onApplyToCart,
+                    colors = ButtonDefaults.buttonColors(containerColor = EcoEmerald),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("claim_and_apply_to_cart_button")
+                ) {
+                    Text("Claim & Apply to Cart", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
