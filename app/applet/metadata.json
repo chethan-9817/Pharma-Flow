@@ -1,0 +1,6 @@
+{
+  "name": "ScratchMart",
+  "description": "E-commerce shop with interactive gesture-based scratch cards, mystery discount reveals, and gamified order reward loops.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
