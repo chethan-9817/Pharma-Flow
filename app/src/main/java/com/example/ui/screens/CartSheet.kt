@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -63,6 +64,7 @@ import com.example.data.model.CartItem
 import com.example.data.model.Order
 import com.example.data.model.PrescriptionScanResult
 import com.example.ui.components.ConfettiEffect
+import com.example.ui.components.MedicineImage
 import com.example.ui.theme.EcoEmerald
 import com.example.ui.theme.EcoEmeraldDark
 import com.example.ui.theme.EcoEmeraldLight
@@ -264,19 +266,17 @@ fun CartSheet(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (item.medicine.isNearExpiry) ExpiryAmberLight else MedicalBlueLight,
-                                        modifier = Modifier.size(38.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MedSlate)
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.Medication,
-                                                contentDescription = null,
-                                                tint = if (item.medicine.isNearExpiry) ExpiryAmber else MedicalBlue,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
+                                        MedicineImage(
+                                            medicine = item.medicine,
+                                            modifier = Modifier.fillMaxSize(),
+                                            cornerRadius = 8.dp
+                                        )
                                     }
 
                                     Spacer(modifier = Modifier.width(10.dp))

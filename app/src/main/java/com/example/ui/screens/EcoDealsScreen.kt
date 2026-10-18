@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Medicine
 import com.example.data.model.ReversePickupRequest
+import com.example.ui.components.MedicineImage
 import com.example.ui.theme.EcoEmerald
 import com.example.ui.theme.EcoEmeraldDark
 import com.example.ui.theme.EcoEmeraldLight
@@ -359,41 +360,63 @@ fun EcoDealsScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Product photo thumbnail
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MedSlate)
+                        ) {
+                            MedicineImage(
+                                medicine = med,
+                                modifier = Modifier.fillMaxSize(),
+                                cornerRadius = 10.dp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = med.brandName,
                                 color = MedTextPrimary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                maxLines = 1
                             )
                             Text(
                                 text = med.genericSalt,
                                 color = MedTextSecondary,
-                                fontSize = 11.sp
+                                fontSize = 11.sp,
+                                maxLines = 1
                             )
                             Text(
                                 text = "Batch: ${med.manufacturer}",
                                 color = MedTextMuted,
-                                fontSize = 10.sp
+                                fontSize = 10.sp,
+                                maxLines = 1
                             )
-                        }
 
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "₹${String.format("%.2f", med.price)}",
-                                color = EcoEmeraldDark,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 16.sp
-                            )
-                            Text(
-                                text = "MRP ₹${String.format("%.2f", med.mrp)}",
-                                color = MedTextMuted,
-                                fontSize = 11.sp,
-                                textDecoration = TextDecoration.LineThrough
-                            )
+                            Row(
+                                modifier = Modifier.padding(top = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "₹${String.format("%.2f", med.price)}",
+                                    color = EcoEmeraldDark,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 15.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "MRP ₹${String.format("%.2f", med.mrp)}",
+                                    color = MedTextMuted,
+                                    fontSize = 11.sp,
+                                    textDecoration = TextDecoration.LineThrough
+                                )
+                            }
                         }
                     }
 

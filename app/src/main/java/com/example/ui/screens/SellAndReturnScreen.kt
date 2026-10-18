@@ -71,6 +71,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.UserProductListing
+import com.example.ui.components.MedicineImageFromUrl
+import com.example.ui.components.MedicineImageProvider
 import com.example.ui.theme.EcoEmerald
 import com.example.ui.theme.EcoEmeraldDark
 import com.example.ui.theme.EcoEmeraldLight
@@ -80,6 +82,7 @@ import com.example.ui.theme.ExpiryAmberLight
 import com.example.ui.theme.MedBackground
 import com.example.ui.theme.MedBorder
 import com.example.ui.theme.MedCardBackground
+import com.example.ui.theme.MedSlate
 import com.example.ui.theme.MedTextPrimary
 import com.example.ui.theme.MedTextSecondary
 import com.example.ui.theme.MedWhite
@@ -789,13 +792,55 @@ fun SellProductForm(
                         modifier = Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            if (hasUploadedPhoto) Icons.Default.CheckCircle else Icons.Default.AddPhotoAlternate,
-                            contentDescription = null,
-                            tint = if (hasUploadedPhoto) EcoEmeraldDark else MedicalBlue,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
+                        if (hasUploadedPhoto) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MedSlate)
+                            ) {
+                                MedicineImageFromUrl(
+                                    imageUrl = MedicineImageProvider.getFallbackUrl(category, dosageOrVolume),
+                                    category = category,
+                                    dosageForm = dosageOrVolume,
+                                    cornerRadius = 8.dp,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .align(Alignment.BottomEnd)
+                                        .clip(CircleShape)
+                                        .background(EcoEmeraldDark),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            Surface(
+                                shape = CircleShape,
+                                color = MedicalBlueLight,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.AddPhotoAlternate,
+                                        contentDescription = null,
+                                        tint = MedicalBlue,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (hasUploadedPhoto) "Package Photo Verified (Batch & Expiry Clear)" else "Upload Product & Expiry Photo",
@@ -804,7 +849,7 @@ fun SellProductForm(
                                 color = if (hasUploadedPhoto) EcoEmeraldDark else MedTextPrimary
                             )
                             Text(
-                                text = "Camera snapshot of front label and embossed expiry date",
+                                text = if (hasUploadedPhoto) "Tap to retake photo • OCR verified batch label" else "Camera snapshot of front label and embossed expiry date",
                                 fontSize = 10.sp,
                                 color = MedTextSecondary
                             )
@@ -869,80 +914,107 @@ fun UserListingCard(
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = listing.brandName.uppercase(),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MedicalBlue
-                    )
-                    Text(
-                        text = listing.productName,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MedTextPrimary
-                    )
-                    Text(
-                        text = "${listing.category} • ${listing.dosageOrVolume}",
-                        fontSize = 11.sp,
-                        color = MedTextSecondary,
-                        modifier = Modifier.padding(top = 1.dp)
+                // Listing Product Thumbnail
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MedBackground)
+                ) {
+                    val imageUrl = listing.photoUrl ?: MedicineImageProvider.getFallbackUrl(listing.category, listing.dosageOrVolume)
+                    MedicineImageFromUrl(
+                        imageUrl = imageUrl,
+                        category = listing.category,
+                        dosageForm = listing.dosageOrVolume,
+                        cornerRadius = 10.dp,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
 
-                // Status Badge
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = when (listing.verificationStatus) {
-                        "APPROVED" -> EcoEmeraldLight
-                        "SOLD" -> MedicalBlueLight
-                        else -> ExpiryAmberLight
-                    },
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        when (listing.verificationStatus) {
-                            "APPROVED" -> EcoEmerald
-                            "SOLD" -> MedicalBlue
-                            else -> ExpiryAmber
-                        }
-                    )
-                ) {
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Icon(
-                            imageVector = when (listing.verificationStatus) {
-                                "APPROVED" -> Icons.Default.Verified
-                                "SOLD" -> Icons.Default.CheckCircle
-                                else -> Icons.Default.HourglassTop
-                            },
-                            contentDescription = null,
-                            tint = when (listing.verificationStatus) {
-                                "APPROVED" -> EcoEmeraldDark
-                                "SOLD" -> MedicalBlueDark
-                                else -> ExpiryAmberDark
-                            },
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = when (listing.verificationStatus) {
-                                "APPROVED" -> "Approved & Live"
-                                "SOLD" -> "Sold & Credited"
-                                else -> "Chemist Review"
-                            },
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = listing.brandName.uppercase(),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MedicalBlue
+                            )
+                            Text(
+                                text = listing.productName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MedTextPrimary,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "${listing.category} • ${listing.dosageOrVolume}",
+                                fontSize = 11.sp,
+                                color = MedTextSecondary,
+                                modifier = Modifier.padding(top = 1.dp)
+                            )
+                        }
+
+                        // Status Badge
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
                             color = when (listing.verificationStatus) {
-                                "APPROVED" -> EcoEmeraldDark
-                                "SOLD" -> MedicalBlueDark
-                                else -> ExpiryAmberDark
+                                "APPROVED" -> EcoEmeraldLight
+                                "SOLD" -> MedicalBlueLight
+                                else -> ExpiryAmberLight
+                            },
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                when (listing.verificationStatus) {
+                                    "APPROVED" -> EcoEmerald
+                                    "SOLD" -> MedicalBlue
+                                    else -> ExpiryAmber
+                                }
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = when (listing.verificationStatus) {
+                                        "APPROVED" -> Icons.Default.Verified
+                                        "SOLD" -> Icons.Default.CheckCircle
+                                        else -> Icons.Default.HourglassTop
+                                    },
+                                    contentDescription = null,
+                                    tint = when (listing.verificationStatus) {
+                                        "APPROVED" -> EcoEmeraldDark
+                                        "SOLD" -> MedicalBlueDark
+                                        else -> ExpiryAmberDark
+                                    },
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = when (listing.verificationStatus) {
+                                        "APPROVED" -> "Approved"
+                                        "SOLD" -> "Sold"
+                                        else -> "Review"
+                                    },
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when (listing.verificationStatus) {
+                                        "APPROVED" -> EcoEmeraldDark
+                                        "SOLD" -> MedicalBlueDark
+                                        else -> ExpiryAmberDark
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }

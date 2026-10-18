@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Medicine
 import com.example.data.model.PrescriptionScanResult
 import com.example.ui.components.MedicineCard
+import com.example.ui.components.MedicineImage
 import com.example.ui.theme.EcoEmerald
 import com.example.ui.theme.EcoEmeraldDark
 import com.example.ui.theme.EcoEmeraldLight
@@ -765,38 +766,51 @@ private fun SuncareShelfCard(
     onAddToCart: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MedSlate),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MedWhite),
         border = androidx.compose.foundation.BorderStroke(1.dp, MedBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
-            .width(185.dp)
+            .width(190.dp)
             .padding(vertical = 2.dp)
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Product Photo Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MedSlate)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = ExpiryAmberLight,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, ExpiryAmber.copy(alpha = 0.5f))
-                ) {
-                    Text(
-                        text = "SPF 50+ PA++++",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ExpiryAmberDark,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                }
-                Icon(
-                    Icons.Default.Shield,
-                    contentDescription = null,
-                    tint = ExpiryAmberDark,
-                    modifier = Modifier.size(16.dp)
+                MedicineImage(
+                    medicine = medicine,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 10.dp
                 )
+
+                // Top Floating Badge
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = ExpiryAmber,
+                        shadowElevation = 2.dp
+                    ) {
+                        Text(
+                            text = "SPF 50+ PA++++",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

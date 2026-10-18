@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -102,36 +103,35 @@ fun MedicineCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            // Visual Header Box
+            // Visual Header Box with Real Product Photography
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp)
+                    .height(120.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (medicine.isNearExpiry) {
-                            Brush.verticalGradient(listOf(ExpiryAmberLight.copy(alpha = 0.5f), MedSlate))
-                        } else {
-                            Brush.verticalGradient(listOf(MedicalBlueLight.copy(alpha = 0.5f), MedSlate))
-                        }
-                    ),
+                    .background(MedSlate),
                 contentAlignment = Alignment.Center
             ) {
-                // Medicine / Skincare Icon
-                Icon(
-                    imageVector = when {
-                        medicine.category.contains("Sunscreen") || medicine.dosageForm.lowercase().contains("gel") -> Icons.Default.Shield
-                        medicine.dosageForm.lowercase() == "syrup" -> Icons.Default.Vaccines
-                        medicine.dosageForm.lowercase() == "capsule" -> Icons.Default.MedicalServices
-                        else -> Icons.Default.Medication
-                    },
-                    contentDescription = null,
-                    tint = when {
-                        medicine.category.contains("Sunscreen") -> ExpiryAmber
-                        medicine.isNearExpiry -> ExpiryAmber
-                        else -> MedicalBlue
-                    },
-                    modifier = Modifier.size(48.dp)
+                // High-resolution real medicine / sunscreen product photo
+                MedicineImage(
+                    medicine = medicine,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 12.dp
+                )
+
+                // Gentle gradient scrim overlay to make badges & hearts ultra-crisp
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Black.copy(alpha = 0.35f),
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.25f)
+                                )
+                            )
+                        )
                 )
 
                 // Top Left: Schedule-H Rx / Eco / SPF 50 Badge
