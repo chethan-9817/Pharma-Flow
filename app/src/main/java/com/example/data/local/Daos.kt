@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.data.model.Medicine
+import com.example.data.model.MedicineDonation
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
@@ -104,4 +105,22 @@ interface UserProductListingDao {
 
     @Query("UPDATE user_listings SET verificationStatus = 'APPROVED' WHERE id = :id")
     suspend fun approveListing(id: String)
+}
+
+@Dao
+interface MedicineDonationDao {
+    @Query("SELECT * FROM medicine_donations ORDER BY createdAt DESC")
+    fun getAllDonations(): Flow<List<MedicineDonation>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDonation(donation: MedicineDonation)
+
+    @Update
+    suspend fun updateDonation(donation: MedicineDonation)
+
+    @Query("DELETE FROM medicine_donations WHERE id = :id")
+    suspend fun deleteDonation(id: String)
+
+    @Query("UPDATE medicine_donations SET status = 'DELIVERED_TO_NGO' WHERE id = :id")
+    suspend fun markDeliveredToNgo(id: String)
 }

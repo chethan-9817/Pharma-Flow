@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
 import com.example.data.model.CartItem
 import com.example.data.model.Medicine
+import com.example.data.model.MedicineDonation
+import com.example.data.model.NgoPartner
 import com.example.data.model.Order
 import com.example.data.model.PrescriptionScanResult
 import com.example.data.model.ReversePickupRequest
@@ -283,10 +285,67 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // End-User Product Resale Listings
+    // End-User Product Resale Listings (Legacy compatibility)
     val userListings: StateFlow<List<UserProductListing>> = repository.userListings.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
     )
+
+    // NGO Medicine Donation & Community Health Hub
+    val medicineDonations: StateFlow<List<MedicineDonation>> = repository.medicineDonations.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val ngoPartners: List<NgoPartner> = repository.ngoPartners
+
+    fun createMedicineDonation(
+        medicineName: String,
+        brandName: String,
+        category: String,
+        dosageOrUnits: String,
+        batchNumber: String,
+        expiryDate: String,
+        packageCondition: String,
+        recipientNgo: NgoPartner,
+        photoUrl: String? = null,
+        onSuccess: (earnedKarma: Int) -> Unit
+    ) {
+        viewModelScope.launch {
+            val (donation, _) = repository.createMedicineDonation(
+                medicineName = medicineName,
+                brandName = brandName,
+                category = category,
+                dosageOrUnits = dosageOrUnits,
+                batchNumber = batchNumber,
+                expiryDate = expiryDate,
+                packageCondition = packageCondition,
+                recipientNgo = recipientNgo,
+                photoUrl = photoUrl
+            )
+            _ecoKarmaPoints.value += donation.karmaPointsEarned
+            SoundManager.playCelebrationSound()
+            onSuccess(donation.karmaPointsEarned)
+        }
+    }
+
+    fun markDonationDelivered(id: String) {
+        viewModelScope.launch {
+            repository.markDonationDelivered(id)
+            SoundManager.playCelebrationSound()
+        }
+    }
+
+    fun deleteDonation(id: String) {
+        viewModelScope.launch {
+            repository.deleteDonation(id)
+        }
+    }
+
+    fun simulateNgoVerifyDonation() {
+        val pledged = medicineDonations.value.firstOrNull { it.status == "PLEDGED" }
+        if (pledged != null) {
+            markDonationDelivered(pledged.id)
+        }
+    }
 
     fun createUserListing(
         productName: String,

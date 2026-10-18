@@ -26,6 +26,7 @@ import com.example.ui.components.AppBottomBar
 import com.example.ui.components.AppDestination
 import com.example.ui.components.EvaluatorPresenterBar
 import com.example.ui.screens.CartSheet
+import com.example.ui.screens.DonateAndReturnScreen
 import com.example.ui.screens.EcoDealsScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LiveTrackingScreen
@@ -82,6 +83,7 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
     val unscratchedCount by viewModel.unscratchedCount.collectAsStateWithLifecycle()
     val activeScratchingCard by viewModel.activeScratchingCard.collectAsStateWithLifecycle()
     val userListings by viewModel.userListings.collectAsStateWithLifecycle()
+    val medicineDonations by viewModel.medicineDonations.collectAsStateWithLifecycle()
 
     // Back button handling
     BackHandler(enabled = isCartOpen || currentDestination != AppDestination.HOME) {
@@ -108,7 +110,8 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                     onSimulateRiderOut = { viewModel.simulateRiderOutForDelivery() },
                     onSimulateDelivered = { viewModel.simulateRiderMarkDelivered() },
                     onGrantScratchCard = { viewModel.grantInstantDemoScratchCard() },
-                    onApproveListing = { viewModel.simulateChemistApproveListing() }
+                    onApproveListing = { viewModel.simulateChemistApproveListing() },
+                    onVerifyNgoDonation = { viewModel.simulateNgoVerifyDonation() }
                 )
             }
         },
@@ -118,7 +121,7 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                 onDestinationSelected = { currentDestination = it },
                 unscratchedCardsCount = unscratchedCount,
                 nearExpiryCount = nearExpiryMedicines.size,
-                activeListingsCount = userListings.size,
+                activeListingsCount = medicineDonations.size,
                 hasActiveDelivery = latestOrder != null && (latestOrder?.currentStage ?: 0) in 1..3
             )
         },
@@ -170,10 +173,10 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                     )
                 }
 
-                AppDestination.SELL_RETURN -> {
-                    SellAndReturnScreen(
+                AppDestination.DONATE_RETURN -> {
+                    DonateAndReturnScreen(
                         viewModel = viewModel,
-                        onNavigateToEcoDeals = { currentDestination = AppDestination.ECO_DEALS }
+                        onNavigateToRewards = { currentDestination = AppDestination.REWARDS }
                     )
                 }
 

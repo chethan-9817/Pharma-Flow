@@ -2,6 +2,8 @@ package com.example.data.repository
 
 import com.example.data.local.AppDatabase
 import com.example.data.model.Medicine
+import com.example.data.model.MedicineDonation
+import com.example.data.model.NgoPartner
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
@@ -23,6 +25,54 @@ class StoreRepository(private val database: AppDatabase) {
     val unscratchedCardCount: Flow<Int> = database.scratchCardDao().getUnscratchedCount()
     val wishlistIds: Flow<List<String>> = database.wishlistDao().getAllWishlistIds()
     val userListings: Flow<List<UserProductListing>> = database.userProductListingDao().getAllListings()
+    val medicineDonations: Flow<List<MedicineDonation>> = database.medicineDonationDao().getAllDonations()
+
+    val ngoPartners: List<NgoPartner> = listOf(
+        NgoPartner(
+            id = "ngo_1",
+            name = "Snehalaya Charitable Healthcare",
+            tagline = "Free dispensary for underprivileged families & pavement dwellers",
+            location = "Manjeshwar - Mangaluru Border",
+            distanceKm = 1.4,
+            urgencyTag = "Urgent: Paracetamol, Antibiotics, Pain Gels",
+            neededCategories = listOf("Fever & Pain", "Antibiotics", "First Aid"),
+            verifiedBadge = "Govt. Regd. 80G Certified",
+            impactPatientsCount = 1850
+        ),
+        NgoPartner(
+            id = "ngo_2",
+            name = "Rotary Community Free Dispensary",
+            tagline = "Daily outpatient clinic providing free chronic care medicines",
+            location = "Kodialbail, Mangaluru",
+            distanceKm = 2.3,
+            urgencyTag = "High Need: Metformin, Telma, Multivitamins",
+            neededCategories = listOf("Diabetes", "Respiratory", "Vitamins"),
+            verifiedBadge = "Rotary Health Foundation",
+            impactPatientsCount = 3400
+        ),
+        NgoPartner(
+            id = "ngo_3",
+            name = "Karuna Elder Care & Palliative Clinic",
+            tagline = "Shelter and palliative care for abandoned senior citizens",
+            location = "Kadri Hills, Mangaluru",
+            distanceKm = 3.1,
+            urgencyTag = "Urgent: Calcium, Neurobion, Eye Ointments",
+            neededCategories = listOf("Vitamins", "First Aid", "Tablets"),
+            verifiedBadge = "Social Welfare Dept. Recognized",
+            impactPatientsCount = 620
+        ),
+        NgoPartner(
+            id = "ngo_4",
+            name = "Prerana Pediatric & Child Welfare",
+            tagline = "Supplying syrups, barrier creams & pediatric antibiotics",
+            location = "Kankanady, Mangaluru",
+            distanceKm = 4.2,
+            urgencyTag = "Critical: Sunscreen / Barrier Gels, Cough Syrups",
+            neededCategories = listOf("Skincare & Sunscreen", "Vitamins", "Antibiotics"),
+            verifiedBadge = "UNICEF Partner Network",
+            impactPatientsCount = 2100
+        )
+    )
 
     suspend fun initializeDatabase() {
         if (database.medicineDao().getMedicineCount() == 0) {
@@ -113,7 +163,111 @@ class StoreRepository(private val database: AppDatabase) {
                     estimatedPayout = 126.0
                 )
             )
+
+            // Seed initial verified NGO donations for Community Health Hub
+            database.medicineDonationDao().insertDonation(
+                MedicineDonation(
+                    id = "donation_demo_1",
+                    medicineName = "Dolo 650 (20 Tablets)",
+                    brandName = "Micro Labs Ltd.",
+                    category = "Fever & Pain",
+                    dosageOrUnits = "2 Strips (20 Tablets)",
+                    batchNumber = "DLO-2024",
+                    expiryDate = "10/2026",
+                    packageCondition = "Factory Sealed Blister",
+                    recipientNgoId = "ngo_1",
+                    recipientNgoName = "Snehalaya Charitable Healthcare",
+                    recipientNgoLocation = "Manjeshwar - Mangaluru Border",
+                    karmaPointsEarned = 200,
+                    donorName = "Chethan K.",
+                    pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+                    photoUrl = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=480&q=80",
+                    status = "DELIVERED_TO_NGO",
+                    createdAt = System.currentTimeMillis() - 86400000L
+                )
+            )
+            database.medicineDonationDao().insertDonation(
+                MedicineDonation(
+                    id = "donation_demo_2",
+                    medicineName = "Minimalist SPF 50 Multi-Vitamin (50g)",
+                    brandName = "Minimalist",
+                    category = "Skincare & Sunscreen",
+                    dosageOrUnits = "1 Bottle (50g Unopened)",
+                    batchNumber = "MNL-SN2024",
+                    expiryDate = "11/2027",
+                    packageCondition = "Tamper Seal Present",
+                    recipientNgoId = "ngo_4",
+                    recipientNgoName = "Prerana Pediatric & Child Welfare",
+                    recipientNgoLocation = "Kankanady, Mangaluru",
+                    karmaPointsEarned = 250,
+                    donorName = "Chethan K.",
+                    pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+                    photoUrl = "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=480&q=80",
+                    status = "PLEDGED",
+                    createdAt = System.currentTimeMillis() - 3600000L
+                )
+            )
         }
+    }
+
+    suspend fun createMedicineDonation(
+        medicineName: String,
+        brandName: String,
+        category: String,
+        dosageOrUnits: String,
+        batchNumber: String,
+        expiryDate: String,
+        packageCondition: String,
+        recipientNgo: NgoPartner,
+        photoUrl: String? = null
+    ): Pair<MedicineDonation, ScratchCard> {
+        val karmaPoints = when {
+            category.contains("Sunscreen", true) || category.contains("Skincare", true) -> 250
+            dosageOrUnits.contains("Strip", true) || dosageOrUnits.contains("Tab", true) -> 200
+            else -> 150
+        }
+
+        val donation = MedicineDonation(
+            id = UUID.randomUUID().toString(),
+            medicineName = medicineName,
+            brandName = brandName,
+            category = category,
+            dosageOrUnits = dosageOrUnits,
+            batchNumber = batchNumber,
+            expiryDate = expiryDate,
+            packageCondition = packageCondition,
+            recipientNgoId = recipientNgo.id,
+            recipientNgoName = recipientNgo.name,
+            recipientNgoLocation = recipientNgo.location,
+            karmaPointsEarned = karmaPoints,
+            donorName = "Chethan K.",
+            pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+            photoUrl = photoUrl,
+            status = "PLEDGED",
+            createdAt = System.currentTimeMillis()
+        )
+        database.medicineDonationDao().insertDonation(donation)
+
+        // Award instant donor scratch card reward!
+        val bonusScratchCard = ScratchCard(
+            id = UUID.randomUUID().toString(),
+            title = "NGO Donor Gratitude Scratcher",
+            subtitle = "Donation reward for ${recipientNgo.name}",
+            prizeType = "CASHBACK",
+            prizeValue = (Random.nextInt(25, 75)).toDouble(),
+            couponCode = "DONOR${Random.nextInt(100, 999)}"
+        )
+        database.scratchCardDao().insertCards(listOf(bonusScratchCard))
+
+        return Pair(donation, bonusScratchCard)
+    }
+
+    suspend fun markDonationDelivered(id: String) {
+        database.medicineDonationDao().markDeliveredToNgo(id)
+    }
+
+    suspend fun deleteDonation(id: String) {
+        database.medicineDonationDao().deleteDonation(id)
     }
 
     suspend fun createUserListing(

@@ -102,3 +102,36 @@ data class UserProductListing(
     val estimatedPayout: Double = listingPrice * 0.90, // 90% direct payout
     val createdAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "medicine_donations")
+data class MedicineDonation(
+    @PrimaryKey val id: String,
+    val medicineName: String,
+    val brandName: String,
+    val category: String, // Tablets, Syrups, First Aid, Skincare, General
+    val dosageOrUnits: String, // e.g. "2 Strips (20 Tablets)"
+    val batchNumber: String,
+    val expiryDate: String,
+    val packageCondition: String = "Factory Sealed Blister",
+    val recipientNgoId: String,
+    val recipientNgoName: String,
+    val recipientNgoLocation: String,
+    val karmaPointsEarned: Int = 200,
+    val donorName: String = "Chethan K.",
+    val pickupAddress: String = "Flat 402, Kadri Hills, Mangaluru",
+    val photoUrl: String? = null,
+    val status: String = "PLEDGED", // PLEDGED, COURIER_ASSIGNED, DELIVERED_TO_NGO
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+data class NgoPartner(
+    val id: String,
+    val name: String,
+    val tagline: String,
+    val location: String,
+    val distanceKm: Double,
+    val urgencyTag: String,
+    val neededCategories: List<String>,
+    val verifiedBadge: String = "Govt. Regd. 80G Certified",
+    val impactPatientsCount: Int = 1200
+)

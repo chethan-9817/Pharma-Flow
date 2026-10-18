@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -37,7 +38,7 @@ import com.example.ui.theme.MedicalBlueDark
 enum class AppDestination(val label: String, val icon: ImageVector, val tag: String) {
     HOME("Home", Icons.Default.MedicalServices, "nav_home"),
     ECO_DEALS("Eco-Deals", Icons.Default.Eco, "nav_eco"),
-    SELL_RETURN("Sell/Return", Icons.Default.Sell, "nav_sell"),
+    DONATE_RETURN("Donate", Icons.Default.VolunteerActivism, "nav_donate"),
     TRACK("Track", Icons.Default.LocalShipping, "nav_track"),
     REWARDS("Rewards", Icons.Default.AutoAwesome, "nav_rewards")
 }
@@ -111,7 +112,7 @@ fun AppBottomBar(
                                 Icon(destination.icon, contentDescription = destination.label)
                             }
                         }
-                        AppDestination.SELL_RETURN -> {
+                        AppDestination.DONATE_RETURN -> {
                             if (activeListingsCount > 0) {
                                 BadgedBox(
                                     badge = {

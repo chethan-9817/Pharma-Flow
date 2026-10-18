@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +51,7 @@ fun EvaluatorPresenterBar(
     onSimulateDelivered: () -> Unit,
     onGrantScratchCard: () -> Unit,
     onApproveListing: () -> Unit = {},
+    onVerifyNgoDonation: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -192,22 +194,22 @@ fun EvaluatorPresenterBar(
                     }
                 }
 
-                // Simulate Chemist: Approve Listing
+                // Simulate NGO Receiving Medicine Donation
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = EcoEmerald.copy(alpha = 0.25f),
                     border = androidx.compose.foundation.BorderStroke(1.dp, EcoEmerald),
                     modifier = Modifier
-                        .clickable { onApproveListing() }
-                        .testTag("evaluator_approve_listing")
+                        .clickable { onVerifyNgoDonation() }
+                        .testTag("evaluator_verify_donation")
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Sell, contentDescription = null, tint = EcoEmerald, modifier = Modifier.size(13.dp))
+                        Icon(Icons.Default.VolunteerActivism, contentDescription = null, tint = EcoEmerald, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Approve User Listing", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("NGO Received Donation", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
             }

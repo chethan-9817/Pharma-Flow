@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.data.model.Medicine
+import com.example.data.model.MedicineDonation
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
@@ -18,9 +19,10 @@ import com.example.data.model.WishlistItem
         ReversePickupRequest::class,
         ScratchCard::class,
         WishlistItem::class,
-        UserProductListing::class
+        UserProductListing::class,
+        MedicineDonation::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun scratchCardDao(): ScratchCardDao
     abstract fun wishlistDao(): WishlistDao
     abstract fun userProductListingDao(): UserProductListingDao
+    abstract fun medicineDonationDao(): MedicineDonationDao
 
     companion object {
         @Volatile

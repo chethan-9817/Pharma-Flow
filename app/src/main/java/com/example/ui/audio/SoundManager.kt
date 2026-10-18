@@ -75,4 +75,8 @@ object SoundManager {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_PROMPT, 40)
         } catch (_: Exception) {}
     }
+
+    fun playCelebrationSound() {
+        playRevealSound()
+    }
 }
