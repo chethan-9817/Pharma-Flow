@@ -108,6 +108,8 @@ app/src/main/java/com/example/
 ├── Theme.kt # MaterialTheme wrapper
 └── Type.kt # Typography scale
 ├── Color.kt # EcoEmerald, ExpiryAmber, MedicalBlue, Slate palettes
+├── Theme.kt # MaterialTheme typography & shape token configuration
+
 
 code
 Code
