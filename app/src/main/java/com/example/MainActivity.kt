@@ -31,6 +31,7 @@ import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LiveTrackingScreen
 import com.example.ui.screens.OrderCelebrationDialog
 import com.example.ui.screens.RewardsScreen
+import com.example.ui.screens.SellAndReturnScreen
 import com.example.ui.theme.MedLifecycleTheme
 import com.example.ui.theme.MedSlate
 import com.example.ui.viewmodel.StoreViewModel
@@ -80,6 +81,7 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
     val scratchCards by viewModel.scratchCards.collectAsStateWithLifecycle()
     val unscratchedCount by viewModel.unscratchedCount.collectAsStateWithLifecycle()
     val activeScratchingCard by viewModel.activeScratchingCard.collectAsStateWithLifecycle()
+    val userListings by viewModel.userListings.collectAsStateWithLifecycle()
 
     // Back button handling
     BackHandler(enabled = isCartOpen || currentDestination != AppDestination.HOME) {
@@ -105,7 +107,8 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                     onSimulatePack = { viewModel.simulateChemistPackOrder() },
                     onSimulateRiderOut = { viewModel.simulateRiderOutForDelivery() },
                     onSimulateDelivered = { viewModel.simulateRiderMarkDelivered() },
-                    onGrantScratchCard = { viewModel.grantInstantDemoScratchCard() }
+                    onGrantScratchCard = { viewModel.grantInstantDemoScratchCard() },
+                    onApproveListing = { viewModel.simulateChemistApproveListing() }
                 )
             }
         },
@@ -115,6 +118,7 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                 onDestinationSelected = { currentDestination = it },
                 unscratchedCardsCount = unscratchedCount,
                 nearExpiryCount = nearExpiryMedicines.size,
+                activeListingsCount = userListings.size,
                 hasActiveDelivery = latestOrder != null && (latestOrder?.currentStage ?: 0) in 1..3
             )
         },
@@ -163,6 +167,13 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                         onScheduleDisposal = { count, meds, address, slot ->
                             viewModel.scheduleReverseDisposal(count, meds, address, slot) {}
                         }
+                    )
+                }
+
+                AppDestination.SELL_RETURN -> {
+                    SellAndReturnScreen(
+                        viewModel = viewModel,
+                        onNavigateToEcoDeals = { currentDestination = AppDestination.ECO_DEALS }
                     )
                 }
 

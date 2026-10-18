@@ -25,6 +25,8 @@ val RxVioletLight = Color(0xFFEDE9FE)
 // Clean Light Surfaces
 val MedWhite = Color(0xFFFFFFFF)
 val MedSlate = Color(0xFFF8FAFC)
+val MedBackground = MedSlate
+val MedCardBackground = MedWhite
 val MedSurfaceElevated = Color(0xFFF1F5F9)
 val MedBorder = Color(0xFFE2E8F0)
 val MedTextPrimary = Color(0xFF0F172A)

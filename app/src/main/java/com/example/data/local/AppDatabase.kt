@@ -8,6 +8,7 @@ import com.example.data.model.Medicine
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
+import com.example.data.model.UserProductListing
 import com.example.data.model.WishlistItem
 
 @Database(
@@ -16,9 +17,10 @@ import com.example.data.model.WishlistItem
         Order::class,
         ReversePickupRequest::class,
         ScratchCard::class,
-        WishlistItem::class
+        WishlistItem::class,
+        UserProductListing::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun reversePickupDao(): ReversePickupDao
     abstract fun scratchCardDao(): ScratchCardDao
     abstract fun wishlistDao(): WishlistDao
+    abstract fun userProductListingDao(): UserProductListingDao
 
     companion object {
         @Volatile

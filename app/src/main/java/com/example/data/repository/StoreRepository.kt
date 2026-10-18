@@ -5,6 +5,7 @@ import com.example.data.model.Medicine
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
+import com.example.data.model.UserProductListing
 import com.example.data.model.WishlistItem
 import com.example.data.remote.SupabaseClient
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,7 @@ class StoreRepository(private val database: AppDatabase) {
     val allScratchCards: Flow<List<ScratchCard>> = database.scratchCardDao().getAllScratchCards()
     val unscratchedCardCount: Flow<Int> = database.scratchCardDao().getUnscratchedCount()
     val wishlistIds: Flow<List<String>> = database.wishlistDao().getAllWishlistIds()
+    val userListings: Flow<List<UserProductListing>> = database.userProductListingDao().getAllListings()
 
     suspend fun initializeDatabase() {
         if (database.medicineDao().getMedicineCount() == 0) {
@@ -73,7 +75,87 @@ class StoreRepository(private val database: AppDatabase) {
             )
             database.orderDao().insertOrder(seedOrder)
             database.wishlistDao().addToWishlist(WishlistItem("med_1"))
+
+            // Seed initial verified user listings for Sell & Return circular hub
+            database.userProductListingDao().insertListing(
+                UserProductListing(
+                    id = "listing_demo_1",
+                    productName = "Minimalist SPF 50 Sunscreen (50g)",
+                    brandName = "Minimalist",
+                    category = "Skincare & Sunscreen",
+                    dosageOrVolume = "50g Fluid Gel",
+                    batchNumber = "MNL-SN2024",
+                    expiryDate = "11/2027",
+                    originalMrp = 399.0,
+                    listingPrice = 280.0,
+                    packageCondition = "Factory Sealed Box",
+                    verificationStatus = "APPROVED",
+                    sellerName = "Chethan K.",
+                    pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+                    estimatedPayout = 252.0
+                )
+            )
+            database.userProductListingDao().insertListing(
+                UserProductListing(
+                    id = "listing_demo_2",
+                    productName = "Augmentin 625 Duo (10 Tablets)",
+                    brandName = "GlaxoSmithKline",
+                    category = "Tablets",
+                    dosageOrVolume = "10 Tablets Strip",
+                    batchNumber = "GSK-AG882",
+                    expiryDate = "08/2026",
+                    originalMrp = 205.0,
+                    listingPrice = 140.0,
+                    packageCondition = "Intact Sealed Blister",
+                    verificationStatus = "PENDING_REVIEW",
+                    sellerName = "Chethan K.",
+                    pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+                    estimatedPayout = 126.0
+                )
+            )
         }
+    }
+
+    suspend fun createUserListing(
+        productName: String,
+        brandName: String,
+        category: String,
+        dosageOrVolume: String,
+        batchNumber: String,
+        expiryDate: String,
+        originalMrp: Double,
+        listingPrice: Double,
+        packageCondition: String,
+        photoUrl: String? = null
+    ): UserProductListing {
+        val listing = UserProductListing(
+            id = UUID.randomUUID().toString(),
+            productName = productName,
+            brandName = brandName,
+            category = category,
+            dosageOrVolume = dosageOrVolume,
+            batchNumber = batchNumber,
+            expiryDate = expiryDate,
+            originalMrp = originalMrp,
+            listingPrice = listingPrice,
+            packageCondition = packageCondition,
+            photoUrl = photoUrl,
+            verificationStatus = "PENDING_REVIEW",
+            sellerName = "Chethan K.",
+            pickupAddress = "Flat 402, Kadri Hills, Mangaluru",
+            estimatedPayout = listingPrice * 0.90,
+            createdAt = System.currentTimeMillis()
+        )
+        database.userProductListingDao().insertListing(listing)
+        return listing
+    }
+
+    suspend fun approveUserListing(id: String) {
+        database.userProductListingDao().approveListing(id)
+    }
+
+    suspend fun deleteUserListing(id: String) {
+        database.userProductListingDao().deleteListing(id)
     }
 
     suspend fun toggleWishlist(medicineId: String, isCurrentlyWishlisted: Boolean) {
@@ -331,6 +413,120 @@ class StoreRepository(private val database: AppDatabase) {
                 isNearExpiry = false,
                 dosageForm = "Tablet",
                 category = "Vitamins"
+            ),
+            // Premium Dermatological Sunscreens
+            Medicine(
+                id = "sun_1",
+                brandName = "The Derma Co 1% Hyaluronic Sunscreen Aqua Gel",
+                genericSalt = "Hyaluronic Acid 1% + Vitamin E (SPF 50 PA++++)",
+                manufacturer = "Honasa Consumer Ltd. • Dermatologist Tested",
+                price = 449.00,
+                mrp = 499.00,
+                stock = 75,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Aqua Gel",
+                category = "Skincare & Sunscreen",
+                batchNumber = "TDC-HG2024"
+            ),
+            Medicine(
+                id = "sun_2",
+                brandName = "Minimalist Sunscreen SPF 50 Multi-Vitamin",
+                genericSalt = "Niacinamide + Vitamin B5 + Vitamin F (Broad Spectrum PA++++)",
+                manufacturer = "Uprising Science Pvt. Ltd. • Non-Comedogenic",
+                price = 379.00,
+                mrp = 399.00,
+                stock = 90,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Fluid Gel",
+                category = "Skincare & Sunscreen",
+                batchNumber = "MNL-MV50"
+            ),
+            Medicine(
+                id = "sun_3",
+                brandName = "Dermatouch Undamaged Ultra Matte Silicone Sunscreen",
+                genericSalt = "Zinc Oxide + Titanium Dioxide (SPF 50 PA+++ Matte Finish)",
+                manufacturer = "Dermatouch Skin Science • Sweat & Water Resistant",
+                price = 465.00,
+                mrp = 499.00,
+                stock = 50,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Silicone Gel",
+                category = "Skincare & Sunscreen",
+                batchNumber = "DMT-MS50"
+            ),
+            // High-Demand Clinical Tablets
+            Medicine(
+                id = "tab_1",
+                brandName = "Dolo 650",
+                genericSalt = "Paracetamol (Acetaminophen) 650mg",
+                manufacturer = "Micro Labs Ltd.",
+                price = 30.00,
+                mrp = 34.00,
+                stock = 250,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Fever & Pain",
+                batchNumber = "DLO-650"
+            ),
+            Medicine(
+                id = "tab_2",
+                brandName = "Augmentin 625 Duo",
+                genericSalt = "Amoxycillin 500mg + Potassium Clavulanate 125mg",
+                manufacturer = "GlaxoSmithKline Pharmaceuticals",
+                price = 185.00,
+                mrp = 205.00,
+                stock = 80,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Antibiotics",
+                batchNumber = "AUG-625"
+            ),
+            Medicine(
+                id = "tab_3",
+                brandName = "Montair-LC",
+                genericSalt = "Montelukast Sodium 10mg + Levocetirizine 5mg",
+                manufacturer = "Cipla Ltd.",
+                price = 192.00,
+                mrp = 210.00,
+                stock = 110,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Respiratory",
+                batchNumber = "MLC-105"
+            ),
+            Medicine(
+                id = "tab_4",
+                brandName = "Thyronorm 50mcg",
+                genericSalt = "Thyroxine Sodium 50mcg",
+                manufacturer = "Abbott India Ltd.",
+                price = 158.00,
+                mrp = 175.00,
+                stock = 95,
+                requiresRx = true,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Diabetes",
+                batchNumber = "THY-50"
+            ),
+            Medicine(
+                id = "tab_5",
+                brandName = "Zincovit",
+                genericSalt = "Multivitamins + Multiminerals + Grape Seed Extract",
+                manufacturer = "Apex Laboratories Pvt. Ltd.",
+                price = 102.00,
+                mrp = 115.00,
+                stock = 140,
+                requiresRx = false,
+                isNearExpiry = false,
+                dosageForm = "Tablet",
+                category = "Vitamins",
+                batchNumber = "ZNC-100"
             ),
             // Near-Expiry 50% Eco-Clearance Batches
             Medicine(

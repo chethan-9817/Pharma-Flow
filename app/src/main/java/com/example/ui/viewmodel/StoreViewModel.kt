@@ -10,6 +10,7 @@ import com.example.data.model.Order
 import com.example.data.model.PrescriptionScanResult
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
+import com.example.data.model.UserProductListing
 import com.example.data.repository.StoreRepository
 import com.example.ui.audio.SoundManager
 import kotlinx.coroutines.delay
@@ -85,6 +86,8 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
             val matchesCategory = when (cat.lowercase()) {
                 "all" -> true
                 "wishlist", "❤️ wishlist" -> wishlisted.contains(med.id)
+                "skincare & sunscreen", "sunscreen", "skincare" -> med.category.contains("Sunscreen", true) || med.category.contains("Skincare", true)
+                "tablets" -> med.dosageForm.equals("Tablet", true) || med.category.contains("Tablet", true)
                 "fever & pain" -> med.category.equals("Fever & Pain", true)
                 "antibiotics" -> med.category.equals("Antibiotics", true)
                 "vitamins" -> med.category.equals("Vitamins", true)
@@ -277,6 +280,62 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
                 code = "DEMO${Random.nextInt(100, 999)}"
             )
             SoundManager.playRevealSound()
+        }
+    }
+
+    // End-User Product Resale Listings
+    val userListings: StateFlow<List<UserProductListing>> = repository.userListings.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    fun createUserListing(
+        productName: String,
+        brandName: String,
+        category: String,
+        dosageOrVolume: String,
+        batchNumber: String,
+        expiryDate: String,
+        originalMrp: Double,
+        listingPrice: Double,
+        packageCondition: String,
+        photoUrl: String? = null,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            repository.createUserListing(
+                productName = productName,
+                brandName = brandName,
+                category = category,
+                dosageOrVolume = dosageOrVolume,
+                batchNumber = batchNumber,
+                expiryDate = expiryDate,
+                originalMrp = originalMrp,
+                listingPrice = listingPrice,
+                packageCondition = packageCondition,
+                photoUrl = photoUrl
+            )
+            SoundManager.playRevealSound()
+            onSuccess()
+        }
+    }
+
+    fun approveUserListing(id: String) {
+        viewModelScope.launch {
+            repository.approveUserListing(id)
+            SoundManager.playRevealSound()
+        }
+    }
+
+    fun deleteUserListing(id: String) {
+        viewModelScope.launch {
+            repository.deleteUserListing(id)
+        }
+    }
+
+    fun simulateChemistApproveListing() {
+        val pending = userListings.value.firstOrNull { it.verificationStatus == "PENDING_REVIEW" }
+        if (pending != null) {
+            approveUserListing(pending.id)
         }
     }
 

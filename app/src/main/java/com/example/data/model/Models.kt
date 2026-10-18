@@ -82,3 +82,23 @@ data class PrescriptionScanResult(
     val extractedMedicines: List<String> = emptyList(),
     val verifiedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "user_listings")
+data class UserProductListing(
+    @PrimaryKey val id: String,
+    val productName: String,
+    val brandName: String,
+    val category: String, // Skincare & Sunscreen, Tablets, General
+    val dosageOrVolume: String,
+    val batchNumber: String,
+    val expiryDate: String,
+    val originalMrp: Double,
+    val listingPrice: Double,
+    val packageCondition: String = "Factory Sealed Box",
+    val photoUrl: String? = null,
+    val verificationStatus: String = "PENDING_REVIEW", // PENDING_REVIEW, APPROVED, SOLD, REJECTED
+    val sellerName: String = "Chethan K.",
+    val pickupAddress: String = "Flat 402, Kadri Hills, Mangaluru",
+    val estimatedPayout: Double = listingPrice * 0.90, // 90% direct payout
+    val createdAt: Long = System.currentTimeMillis()
+)

@@ -117,25 +117,46 @@ fun MedicineCard(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                // Medicine Icon
+                // Medicine / Skincare Icon
                 Icon(
-                    imageVector = when (medicine.dosageForm.lowercase()) {
-                        "syrup" -> Icons.Default.Vaccines
-                        "capsule" -> Icons.Default.MedicalServices
+                    imageVector = when {
+                        medicine.category.contains("Sunscreen") || medicine.dosageForm.lowercase().contains("gel") -> Icons.Default.Shield
+                        medicine.dosageForm.lowercase() == "syrup" -> Icons.Default.Vaccines
+                        medicine.dosageForm.lowercase() == "capsule" -> Icons.Default.MedicalServices
                         else -> Icons.Default.Medication
                     },
                     contentDescription = null,
-                    tint = if (medicine.isNearExpiry) ExpiryAmber else MedicalBlue,
+                    tint = when {
+                        medicine.category.contains("Sunscreen") -> ExpiryAmber
+                        medicine.isNearExpiry -> ExpiryAmber
+                        else -> MedicalBlue
+                    },
                     modifier = Modifier.size(48.dp)
                 )
 
-                // Top Left: Schedule-H Rx / Eco Badge
+                // Top Left: Schedule-H Rx / Eco / SPF 50 Badge
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(6.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    if (medicine.category.contains("Sunscreen")) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = ExpiryAmber,
+                            modifier = Modifier.padding(2.dp)
+                        ) {
+                            Text(
+                                text = "SPF 50+",
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 9.sp,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
                     if (medicine.requiresRx) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),

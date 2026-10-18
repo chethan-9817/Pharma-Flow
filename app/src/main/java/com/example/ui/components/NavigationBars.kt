@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -36,6 +37,7 @@ import com.example.ui.theme.MedicalBlueDark
 enum class AppDestination(val label: String, val icon: ImageVector, val tag: String) {
     HOME("Home", Icons.Default.MedicalServices, "nav_home"),
     ECO_DEALS("Eco-Deals", Icons.Default.Eco, "nav_eco"),
+    SELL_RETURN("Sell/Return", Icons.Default.Sell, "nav_sell"),
     TRACK("Track", Icons.Default.LocalShipping, "nav_track"),
     REWARDS("Rewards", Icons.Default.AutoAwesome, "nav_rewards")
 }
@@ -46,6 +48,7 @@ fun AppBottomBar(
     onDestinationSelected: (AppDestination) -> Unit,
     unscratchedCardsCount: Int,
     nearExpiryCount: Int,
+    activeListingsCount: Int = 0,
     hasActiveDelivery: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -75,7 +78,7 @@ fun AppBottomBar(
                                             Text(
                                                 text = "$unscratchedCardsCount",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 10.sp
+                                                fontSize = 9.sp
                                             )
                                         }
                                     }
@@ -96,6 +99,28 @@ fun AppBottomBar(
                                         ) {
                                             Text(
                                                 text = "50%",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 9.sp
+                                            )
+                                        }
+                                    }
+                                ) {
+                                    Icon(destination.icon, contentDescription = destination.label)
+                                }
+                            } else {
+                                Icon(destination.icon, contentDescription = destination.label)
+                            }
+                        }
+                        AppDestination.SELL_RETURN -> {
+                            if (activeListingsCount > 0) {
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = EcoEmeraldDark,
+                                            contentColor = Color.White
+                                        ) {
+                                            Text(
+                                                text = "$activeListingsCount",
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 9.sp
                                             )
@@ -138,8 +163,9 @@ fun AppBottomBar(
                 label = {
                     Text(
                         text = destination.label,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 11.sp
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 10.sp,
+                        maxLines = 1
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(

@@ -1,156 +1,165 @@
-# Medicine Lifecycle Management System (PBL-3MRL) - Android Customer App
+# Skincare, New Tablets & End-User Product Resale Hub
 
-A complete, production-grade Android application built with Kotlin and Jetpack Compose for the **Medicine Lifecycle Management System (PBL-3MRL)**, featuring real-time Supabase sync with offline resilience, AI prescription scanning, near-expiry eco-clearance marketplace, reverse logistics disposal, animated GPS delivery dispatch map, and tactile Canvas scratch cards.
+Expand the Medicine Lifecycle Management System with premier dermatological sunscreens (The Derma Co, Minimalist, Dermatouch), essential new therapeutic tablets, a dedicated C2C "Sell & Return" circular marketplace for consumers to list and sell sealed end-products with batch and expiry verification, and extensive visual smoothing and performance optimizations across all interactions.
 
 ## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The application architecture and design systems are aligned with your confirmed choices:
-> - **Evaluator Switcher Bar**: Fixed floating presenter dock above the Android frame with instant simulation triggers (`Pack Order`, `Out for Delivery`, `Mark Delivered`, `+ Demo Scratch Card`, and `Supabase Sync Status`).
-> - **Prescription AI Verification**: Instant AI laser scan simulation with auto-extracted Schedule-H medicines and verified badge.
-> - **Live GPS Map Visualization**: High-fidelity custom animated vector road map with pharmacy origin, customer destination, animated route dashes, and a moving courier motorcycle marker.
-> - **Eco-Deals & Sustainability**: 50% discount clearance for near-expiry batches (15–30 days) and reverse logistics return for expired medicine strips in exchange for Eco-Karma points and scratch cards.
-> - **Supabase Realtime Sync**: Connected to `https://oxzrzmwixhfcssspofpk.supabase.co` (`sb_publishable_D7z-EryNFkDzsFV8DPYcuA_5tfcTkun`) with instant 1-tap demo auth ("Continue as Demo User - Chethan") and local Room database fallback.
+> The following user preferences were confirmed during clarification and will steer the implementation:
 
-- **Confirmed Decision 1**: Fixed presenter bar docked at the top allowing evaluators to simulate chemist and rider state transitions instantly without leaving the app.
-- **Confirmed Decision 2**: Pure white (`#FFFFFF`) and clean medical slate (`#F8FAFC`) theme accented with Medical Blue (`#0284C7`), Eco-Emerald (`#10B981`), and Expiry Amber (`#F59E0B`).
-- **Confirmed Decision 3**: Complete 4-tab bottom navigation with live badge counts: Home, Eco-Deals, Track, and Rewards.
+- **Confirmed Decision 1 (Sell & Return Placement)**: A dedicated **"Sell & Return"** section in the navigation structure, giving end users an intuitive portal to list sealed surplus medicines/skincare and schedule doorstep verification pickups.
+- **Confirmed Decision 2 (Verification Workflow)**: Listings require mandatory **package photo upload, batch number, manufacturing date, and expiry date validation** with safety guideline confirmation before going live or qualifying for chemist payout.
+- **Confirmed Decision 3 (Skincare & Sun Care Cataloging)**: Introduction of a dedicated **"Skincare & Sunscreen"** category chip with an elevated horizontal "Derma Suncare Top Shelf" featuring The Derma Co 1% Hyaluronic Aqua Gel, Minimalist SPF 50 Multi-Vitamin, and Dermatouch Ultra Matte Silicone Gel, alongside new clinical tablets.
 
 ---
 
 ## 1. Overview & Core Concept
 
-The **PBL-3MRL End-User Customer App** digitizes the entire pharmaceutical lifecycle from safe retail fulfillment to near-expiry clearance and green reverse-logistics disposal:
-- **Fast Medicine Delivery**: Hyperlocal 11-minute delivery in Mangaluru with smart Schedule-H Rx eligibility verification.
-- **Pharmaceutical Waste Prevention (Eco-Deals)**: 50% off near-expiry batches with transparent expiry countdowns and pharmaceutical waste diverted metrics.
-- **Circular Reverse Logistics**: Home pickup scheduling for expired or unused medicine strips, preventing water-table contamination in exchange for Eco-Karma points.
-- **Gamified Rewards & Wallet**: Instant MedWallet cashback (`₹`), Eco-Karma points, and interactive scratch cards.
+- **What It Does**: 
+  1. Expands product catalog with trending dermatological sunscreens (**The Derma Co 1% Hyaluronic Sunscreen Aqua Gel SPF 50 PA++++**, **Minimalist Sunscreen SPF 50 with Multi-Vitamin & Niacinamide**, **Dermatouch Undamaged Ultra Matte Silicone Sunscreen SPF 50 PA+++**) and high-demand new therapeutic tablets (**Dolo 650**, **Augmentin 625 Duo**, **Montair-LC**, **Thyronorm 50mcg**, **Neurobion Forte**, **Zincovit**).
+  2. Empowers everyday consumers to become active participants in the circular pharmacy economy through a **"Sell Sealed Products"** wizard—allowing them to resell unneeded, unexpired, sealed healthcare/dermacosmetics or surrender expired strips for Eco-Karma points and direct MedWallet credits.
+  3. Streamlines the app's rendering pipeline and interface with crisp typography, smooth edge-to-edge layout transitions, responsive haptics, and frictionless micro-interactions.
+- **Target Audience / Persona**: Patients, eco-conscious consumers, and skincare enthusiasts who want quick access to genuine medicines, top-rated sun protection, and a responsible way to monetize or recycle surplus sealed products.
+- **Key Value**: Reduces pharmaceutical and cosmetic landfill waste, lowers healthcare costs via verified circular resale, and provides instant access to India's top dermatological sunscreens and essential daily tablets.
 
 ---
 
 ## 2. User Experience & Visual Design
 
+### Key User Flows
+
+1. **Browsing Sunscreens & New Tablets**:
+   - User taps the new **"Skincare & Sunscreen"** or **"Tablets"** filter chip on the Home screen.
+   - The UI reveals a dedicated high-polish banner showcasing UV Protection ratings (SPF 50, PA++++), broad-spectrum filters, water resistance, and clean chemical/mineral formulations.
+   - User can add sunscreen products directly to cart or tap for a quick specs sheet (Texture, Key Actives, Skin Type Suitability, Expiry Date).
+
+2. **Consumer "Sell End Products" Flow**:
+   - User navigates to the dedicated **"Sell & Return"** section from the bottom navigation or quick header shortcut.
+   - Two clear action pathways:
+     - **"Sell Sealed Surplus"**: For unexpired, sealed medicines or skincare bottles/tubes to earn direct cash/MedWallet payout.
+     - **"Return Expired Strips"**: For safe medical disposal to earn Eco-Karma points and reward scratch cards.
+   - Guided 3-step listing form:
+     1. Select product category (Skincare/Sunscreen, Tablet Strip, Syrup/Ointment) & enter Brand/Name.
+     2. Input Batch Number, Expiry Date (must be >90 days out for resale), Purchase MRP, and Asking Price.
+     3. Select package condition (Factory Sealed / Unopened Box) & simulated package photo verification scan.
+   - Once submitted, the item appears in **"My Active Listings"** with real-time status (`Under Chemist Review` → `Approved & Live` → `Pickup Assigned` → `Payout Credited`).
+
+3. **Smooth UI Polish & Fluid Navigation**:
+   - Unified 5-destination bottom navigation bar with badging: `Home`, `Eco-Deals`, `Sell & Return`, `Track`, `Rewards`.
+   - Polished elevation cards with subtle 1dp borders, ripple feedback, smooth staggered spring animations on cart bottom sheet, and clean visual status pills.
+
+### Visual Identity & Theme Tokens
+
+- **Clean Medical Canvas**: `#FFFFFF` background with soft slate `#F8FAFC` cards and `#F1F5F9` borders (`MedBorder`).
+- **Accent Tokens**:
+  - `MedicalBlue` (`#0284C7`) for primary clinical actions and search highlights.
+  - `EcoEmerald` (`#10B981`) for circular savings, payouts, and eco-points.
+  - `SunAmber` (`#F59E0B`) for UV warnings, expiry indicators, and suncare tags.
+  - `DermaRose` / `SunGold` (`#FFEDD5` / `#F97316`) for dermatological sunscreen badge accents.
+- **Typography**: Clear hierarchy with bold header titles, clean subtitle captions, and distinct monospace batch/expiry pills.
+
+---
+
+## 3. Key Product Decisions & Trade-Offs
+
+- **Decision 1: Dual Circular Hub (Sell vs. Safe Disposal)**
+  - *Chosen Approach*: Unify consumer product selling (for sealed, unexpired goods) and reverse logistics disposal (for expired strips) in a cohesive "Sell & Return" screen with segmented tabs.
+  - *Why*: Prevents user confusion between commercial resale (requiring >90 days validity & sealed packaging) and environmental safe disposal (where expired items receive disposal karma instead of cash resale).
+  - *Alternatives Considered*: Hiding the sell option inside profile settings or mixing user resale items into the primary pharmacist catalog without distinction.
+
+- **Decision 2: Safety & Quality Verification Guardrails**
+  - *Chosen Approach*: Enforce mandatory batch validation, expiry threshold checking (resale items must have at least 3 months shelf life remaining), sealed status declaration, and photo upload verification before an item can be published.
+  - *Why*: Ensures strict compliance with drug safety and cosmetics hygiene standards, preventing opened or degraded items from reaching other consumers.
+
+- **Decision 3: High-Performance In-Memory & Room Data Layer**
+  - *Chosen Approach*: Store user-listed resale products in Room entity (`user_listings`) with reactive `Flow` updates, coupled with seeded dermatological sunscreens and clinical tablets in `StoreRepository`.
+  - *Why*: Guarantees instant sub-16ms UI updates without network lag while keeping persistent offline capability on Android.
+
+---
+
+## 4. Technical Architecture & Data Strategy
+
+### System & Navigation Flow
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ TOP EVALUATOR BAR: [Pack Order] [Rider En Route] [Delivered] [+ Card]  │
-│ [🟢 Supabase: Live Sync]                                                │
+│                        Top Floating Evaluator Bar                      │
+│   [Simulate Chemist Pack] [Simulate Rider] [Approve User Listing]     │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                             MainActivity                               │
 ├────────────────────────────────────────────────────────────────────────┤
-│ ANDROID PHONE FRAME:                                                   │
-│ ┌────────────────────────────────────────────────────────────────────┐ │
-│ │ 📍 Mangaluru • ⚡ 11 Mins            [ ₹120 MedWallet ] [ 👤 User ] │ │
-│ │ [ 🔍 Search Brand or Generic Salt... ]                             │ │
-│ │ CHIPS: [ All ] [ Fever & Pain ] [ Antibiotics ] [ Vitamins ] [ ... ]│ │
-│ ├────────────────────────────────────────────────────────────────────┤ │
-│ │ 🩺 AI PRESCRIPTION SCANNER: [ Upload Rx for Instant Verification ] │ │
-│ ├────────────────────────────────────────────────────────────────────┤ │
-│ │ MEDICINE CATALOG:                                                  │ │
-│ │ ┌─────────────────────────┐  ┌───────────────────────────────────┐ │ │
-│ │ │ Augmentin 625 Duo (Rx)  │  │ Dolo 650 (Paracetamol)            │ │ │
-│ │ │ ₹185.00  • In Stock 24  │  │ ₹32.00  • In Stock 150            │ │ │
-│ │ │ [ + Add to Bag ]        │  │ [ + Add to Bag ]                  │ │ │
-│ │ └─────────────────────────┘  └───────────────────────────────────┘ │ │
-│ ├────────────────────────────────────────────────────────────────────┤ │
-│ │ FLOATING CART PILL: [ 2 Items • ₹217 (Saved ₹35) • Checkout -> ]  │ │
-│ ├────────────────────────────────────────────────────────────────────┤ │
-│ │ BOTTOM NAV: [ 🏠 Home ]  [ 🌿 Eco-Deals ]  [ 📍 Track ]  [ 🎁 Rewards ] │
-│ └────────────────────────────────────────────────────────────────────┘ │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────┐  ┌───────┐ │
+│  │   Tab 1    │  │   Tab 2    │  │   Tab 3    │  │ Tab 4 │  │ Tab 5 │ │
+│  │    Home    │  │ Eco-Deals  │  │Sell&Return │  │ Track │  │Rewards│ │
+│  │ (Catalog & │  │(Clearance &│  │(User Resale│  │ (Live │  │(Scratch│ │
+│  │  Suncare)  │  │  Disposal) │  │  Listing)  │  │  GPS) │  │ Wallet)│ │
+│  └──────┬─────┘  └────────────┘  └──────┬─────┘  └───────┘  └───────┘ │
+│         │                               │                              │
+│  ┌──────▼────────┐               ┌──────▼────────┐                     │
+│  │ Suncare Shelf │               │  Resale Form  │                     │
+│  │ + New Tablets │               │ + Listings UI │                     │
+│  └───────────────┘               └───────────────┘                     │
+├────────────────────────────────────────────────────────────────────────┤
+│            Slide-Up Medical Cart & UPI Checkout Sheet                  │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                      Room Persistence & Supabase                       │
+│    medicines │ orders │ user_listings │ reverse_pickups │ scratch_cards│
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Visual Themes & Design Tokens
-- **Background**: Medical Clean White (`#FFFFFF`) and Soft Slate (`#F8FAFC`).
-- **Surfaces & Cards**: Card Pure White with 1dp border `#E2E8F0` and subtle elevation.
-- **Primary Accent**: Medical Blue (`#0284C7`) and Deep Navy (`#0F172A`).
-- **Eco & Savings Accent**: Emerald Green (`#10B981`) for near-expiry discounts and Eco-Karma.
-- **Alert Accent**: Expiry Amber (`#F59E0B`) for batch expiry countdown badges.
-- **Prescription Tag**: Violet (`#8B5CF6`) pill indicating Schedule-H Rx requirement.
+### Data Model Additions
 
----
+1. **`UserProductListing` Entity (`user_listings`)**:
+   - `id`: String (UUID)
+   - `productName`: String
+   - `brandName`: String (e.g., "The Derma Co", "Minimalist", "Sun Pharma")
+   - `category`: String ("Skincare & Sunscreen", "Tablets", "Health & Wellness")
+   - `dosageOrVolume`: String (e.g., "50g Gel", "10 Tablets Strip", "30ml Serum")
+   - `batchNumber`: String
+   - `expiryDate`: String
+   - `originalMrp`: Double
+   - `listingPrice`: Double
+   - `packageCondition`: String ("Factory Sealed", "Intact Blister", "Box Sealed")
+   - `photoUri`: String?
+   - `verificationStatus`: String ("PENDING_REVIEW", "APPROVED", "SOLD", "REJECTED")
+   - `sellerName`: String = "Chethan K."
+   - `listedAt`: Long
 
-## 3. Detailed Tab & Feature Specifications
+2. **Expanded `Medicine` Catalog Data**:
+   - **The Derma Co 1% Hyaluronic Sunscreen Aqua Gel** (SPF 50 PA++++, 50g, ₹449 MRP, Non-greasy, Blue Light Filter)
+   - **Minimalist SPF 50 Sunscreen with Multi-Vitamins** (SPF 50 PA++++, 50g, ₹379 MRP, Niacinamide + Vitamin B5 + F)
+   - **Dermatouch Undamaged Ultra Matte Silicone Sunscreen** (SPF 50 PA+++, 50g, ₹485 MRP, Water & Sweat Resistant)
+   - **Augmentin 625 Duo Tablets** (Amoxycillin + Clavulanic Acid, 10 Tablets, ₹185 MRP, Schedule-H)
+   - **Dolo 650 Tablets** (Paracetamol 650mg, 15 Tablets, ₹34 MRP, OTC Fever & Pain)
+   - **Montair-LC Tablets** (Montelukast + Levocetirizine, 10 Tablets, ₹195 MRP, Respiratory Allergy)
+   - **Thyronorm 50mcg Tablets** (Thyroxine Sodium, 120 Tablets, ₹165 MRP, Thyroid Health)
+   - **Zincovit Tablets** (Multivitamin + Multimineral with Grape Seed Extract, 15 Tablets, ₹115 MRP)
+   - **Neurobion Forte Tablets** (Vitamin B-Complex with B12, 30 Tablets, ₹42 MRP)
 
-### Top Evaluator Switcher Bar
-- Docked above the main Android frame with presenter buttons:
-  - `[Simulate Chemist: Pack Active Order]` (moves order from `pending` to `ready_for_pickup`)
-  - `[Simulate Rider: Out for Delivery]` (moves order to `out_for_delivery`, animates motorcycle on map)
-  - `[Simulate Rider: Mark Delivered]` (moves order to `delivered`, triggers celebration)
-  - `[+ Instant Demo Scratch Card]` (awards bonus mystery card directly into wallet)
-  - `[Supabase Status Indicator]` (toggles/displays live sync vs. robust local Room fallback)
+### Step-by-Step Execution Plan
 
-### Tab 1: Home, Catalog & AI Prescription Scanner
-- **Header**: Delivery location ("Mangaluru • ⚡ 11 Mins"), MedWallet balance chip (`₹120`), and Demo User ("Chethan K.").
-- **Search & Filter**: Search by brand name (e.g., *Dolo 650*, *Augmentin*, *Azithral*) or generic salt (*Paracetamol*, *Amoxicillin + Clavulanate*).
-- **12+ Realistic Medicines**: Comprehensive dataset with Brand, Generic Salt, Manufacturer, Price, Stock, and `requires_rx` flag.
-- **Smart Rx Scanner Modal**:
-  - Bottom sheet with "Sample Doctor Prescription" preset or file selection.
-  - Animated laser scanner beam (2-second scanning animation) extracting medicines and unlocking Schedule-H items for checkout.
-
-### Tab 2: Eco-Deals & Reverse Logistics
-- **Near-Expiry Clearance Marketplace**: Batches expiring in 15–30 days offered at **50% OFF**.
-  - Badge: *"Expires in 22 Days • Safe for Immediate Course • 50% OFF"*.
-  - Live metric card: Pharmaceutical chemical waste prevented (in grams/tablets).
-- **Reverse Logistics Disposal**: Form to schedule a free doorstep rider pickup for expired/unused blister strips.
-  - Submitting schedules pickup, awards **+50 Eco-Karma Points**, and unlocks a **Bonus Scratch Card**.
-
-### Slide-Up Cart & Android UPI Checkout
-- **Floating Cart Dock**: Displays total items, total price, and eco-savings.
-- **Checkout Sheet**: Item list, won coupon selector, MedWallet balance toggle (`₹`), bill breakdown, and Android UPI selector (Google Pay, PhonePe, Paytm, COD).
-- **Pay & Place Order**: Plays payment verification tick animation, writes order to Supabase/Room, unlocks a fresh mystery scratch card, and triggers the scratch modal.
-
-### Tab 3: Live Order Tracking & Interactive Dispatch Map
-- **Interactive Simulated GPS Map**: Compose Canvas drawing streets, pharmacy store pin, customer home pin, animated dashed route path, and an interpolating rider motorcycle marker.
-- **4-Stage Stepper**:
-  1. *Order Placed* (`pending`)
-  2. *Verified & Packed* (`ready_for_pickup`)
-  3. *Out for Delivery* (`out_for_delivery`)
-  4. *Delivered* (`delivered`)
-- **Rider Card**: "Ramesh K • 4.9★ • Cold-Chain Certified", mock call button, and delivery verification `OTP: 4829`.
-
-### Tab 4: Interactive Canvas Scratch Cards & MedWallet
-- **MedWallet Header**: Animated counters for Cashback Balance (`₹`) and Eco-Karma Points.
-- **Scratch Card Grid**: Unscratched mystery cards with shimmering gradients and scratched card history.
-- **Interactive Scratch-Off Modal**:
-  - `280px x 280px` hardware-accelerated Compose Canvas with gesture erasing (32px radius circle).
-  - Calculates transparent percentage; auto-reveals at >40% with confetti burst, sound effect, and immediate wallet/coupon credit.
-
----
-
-## 4. Technical Architecture & Component Flow
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        EVALUATOR PRESENTER BAR                         │
-│  [Pack Order]  [Rider Out]  [Delivered]  [+ Scratch Card]  [Sync Status]│
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                        MAIN ANDROID INTERFACE                          │
-│  MainActivity ─── Scaffold with Bottom Navigation                      │
-│   ├── Tab 1: HomeScreen (Catalog, Search, Rx Scanner Sheet)            │
-│   ├── Tab 2: EcoDealsScreen (50% Near-Expiry & Reverse Logistics)      │
-│   ├── Tab 3: LiveTrackingScreen (Canvas GPS Map & 4-Stage Stepper)     │
-│   └── Tab 4: RewardsScreen (MedWallet & Canvas Scratch Cards)          │
-│   ├── FloatingCartPill & CheckoutSheet (UPI Payment & Coupon Applier)  │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                       BUSINESS LOGIC (VIEWMODEL)                       │
-│  MedicineStoreViewModel                                                │
-│   ├── Catalog & Prescription Verification Manager                      │
-│   ├── EcoDeals & Reverse Logistics Pickup Controller                   │
-│   ├── Order Dispatch & GPS Interpolation Engine                        │
-│   └── MedWallet, Scratch Engine & Audio Tone Synthesizer               │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                          PERSISTENCE LAYER                             │
-│  StoreRepository                                                       │
-│   ├── Remote: Supabase REST API (orders, realtime status changes)      │
-│   └── Local: Room Database (medicines, orders, coupons, wallet, cards) │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-### Key Sequences
-1. **Prescription Verification**: Tapping "Upload Rx" launches modal -> selects sample prescription -> laser scan animates -> verifies Rx eligibility -> unlocks Schedule-H medicines in cart.
-2. **Checkout to Tracking**: Checkout with UPI -> order created in Supabase & Room -> awards scratch card -> evaluator bar can simulate chemist packing (`ready_for_pickup`) and rider transit (`out_for_delivery`), smoothly updating the live map.
-3. **Scratch & MedWallet Credit**: User drags finger on canvas scratcher -> exceeds 40% -> confetti fireworks trigger -> cash credited directly to MedWallet balance (`₹`) with animated counter.
+1. **Data Layer (`Models.kt`, `Daos.kt`, `AppDatabase.kt`, `StoreRepository.kt`)**:
+   - Add `UserProductListing` entity and `UserProductListingDao`.
+   - Update Room database version with destructive fallback / auto migration.
+   - Populate new sunscreen products and tablets in `StoreRepository.kt`.
+   - Add CRUD methods for user product listings (create listing, get user listings, delete listing, simulate chemist approval).
+2. **UI Polish & Navigation (`NavigationBars.kt`, `MainActivity.kt`)**:
+   - Update `AppDestination` to include `SELL_RETURN` ("Sell/Return") with an eco-handshake icon (`Icons.Default.Sell` or `CurrencyExchange`).
+   - Refine active pill styling, smooth navigation transitions, and touch responsiveness.
+3. **Dedicated Screen (`SellAndReturnScreen.kt`)**:
+   - Build dual-tab view: **"Sell Sealed Products"** & **"My Active Listings"**, alongside quick access to **"Return Expired Strips"**.
+   - Interactive 3-step listing dialog/sheet with input validation (batch, expiry date picker, condition picker, simulated photo picker).
+   - Real-time listing card showcasing verified badge, estimated MedWallet earnings, and chemist inspection status.
+4. **Catalog & Home Polish (`HomeScreen.kt`)**:
+   - Add new **"Skincare & Sunscreen"** category pill.
+   - Add an eye-catching horizontal **"Derma Suncare Top Shelf"** showcasing Derma Co, Minimalist, and Dermatouch with SPF badges and quick-add buttons.
+   - Include tablet entries under the **"Tablets"** / **"Fever & Pain"** / **"Antibiotics"** categories.
+5. **Evaluator Bar Addition (`EvaluatorBar.kt`)**:
+   - Add a quick demo trigger `[Approve Pending User Listing]` to allow instant simulation of chemist verification and payout.
+6. **Testing & Verification**:
+   - Update unit test cases in `ExampleUnitTest.kt` to test resale listing validation, expiry calculation, and new catalog additions.
+   - Run compilation and tests to ensure zero regressions.

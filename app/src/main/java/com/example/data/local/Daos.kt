@@ -9,6 +9,7 @@ import com.example.data.model.Medicine
 import com.example.data.model.Order
 import com.example.data.model.ReversePickupRequest
 import com.example.data.model.ScratchCard
+import com.example.data.model.UserProductListing
 import com.example.data.model.WishlistItem
 import kotlinx.coroutines.flow.Flow
 
@@ -85,4 +86,22 @@ interface WishlistDao {
 
     @Query("DELETE FROM wishlist WHERE medicineId = :medicineId")
     suspend fun removeFromWishlist(medicineId: String)
+}
+
+@Dao
+interface UserProductListingDao {
+    @Query("SELECT * FROM user_listings ORDER BY createdAt DESC")
+    fun getAllListings(): Flow<List<UserProductListing>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertListing(listing: UserProductListing)
+
+    @Update
+    suspend fun updateListing(listing: UserProductListing)
+
+    @Query("DELETE FROM user_listings WHERE id = :id")
+    suspend fun deleteListing(id: String)
+
+    @Query("UPDATE user_listings SET verificationStatus = 'APPROVED' WHERE id = :id")
+    suspend fun approveListing(id: String)
 }

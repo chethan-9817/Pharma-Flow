@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ fun EvaluatorPresenterBar(
     onSimulateRiderOut: () -> Unit,
     onSimulateDelivered: () -> Unit,
     onGrantScratchCard: () -> Unit,
+    onApproveListing: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -187,6 +189,25 @@ fun EvaluatorPresenterBar(
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = ExpiryAmber, modifier = Modifier.size(13.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("+ Demo Scratch Card", color = ExpiryAmber, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+
+                // Simulate Chemist: Approve Listing
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = EcoEmerald.copy(alpha = 0.25f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, EcoEmerald),
+                    modifier = Modifier
+                        .clickable { onApproveListing() }
+                        .testTag("evaluator_approve_listing")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Sell, contentDescription = null, tint = EcoEmerald, modifier = Modifier.size(13.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Approve User Listing", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
             }

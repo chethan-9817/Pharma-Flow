@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -42,7 +43,9 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,6 +83,8 @@ import com.example.ui.theme.EcoEmerald
 import com.example.ui.theme.EcoEmeraldDark
 import com.example.ui.theme.EcoEmeraldLight
 import com.example.ui.theme.ExpiryAmber
+import com.example.ui.theme.ExpiryAmberDark
+import com.example.ui.theme.ExpiryAmberLight
 import com.example.ui.theme.MedBorder
 import com.example.ui.theme.MedSlate
 import com.example.ui.theme.MedSurfaceElevated
@@ -112,7 +117,17 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     var showRxScannerSheet by remember { mutableStateOf(false) }
-    val categories = listOf("All", "Fever & Pain", "Antibiotics", "Vitamins", "Diabetes", "First Aid", "❤️ Wishlist")
+    val categories = listOf(
+        "All",
+        "Skincare & Sunscreen",
+        "Tablets",
+        "Fever & Pain",
+        "Antibiotics",
+        "Vitamins",
+        "Diabetes",
+        "First Aid",
+        "❤️ Wishlist"
+    )
 
     Column(
         modifier = modifier
@@ -391,6 +406,16 @@ fun HomeScreen(
                 }
             }
 
+            // Derma Suncare Top Shelf Banner & Carousel
+            if (selectedCategory.equals("All", true) || selectedCategory.contains("Sunscreen", true) || selectedCategory.contains("Skincare", true)) {
+                item(span = { GridItemSpan(2) }) {
+                    DermaSuncareTopShelf(
+                        onAddToCart = onAddToCart,
+                        onViewAllSuncare = { onCategoryChange("Skincare & Sunscreen") }
+                    )
+                }
+            }
+
             // Products
             if (medicines.isEmpty()) {
                 item(span = { GridItemSpan(2) }) {
@@ -609,3 +634,225 @@ fun HomeScreen(
         }
     }
 }
+
+@Composable
+fun DermaSuncareTopShelf(
+    onAddToCart: (Medicine) -> Unit,
+    onViewAllSuncare: () -> Unit
+) {
+    val sunscreens = listOf(
+        Medicine(
+            id = "sun_1",
+            brandName = "The Derma Co 1% Hyaluronic Sunscreen Aqua Gel",
+            genericSalt = "Hyaluronic Acid 1% + Vitamin E (SPF 50 PA++++)",
+            manufacturer = "Honasa Consumer Ltd. • Dermatologist Tested",
+            price = 449.00,
+            mrp = 499.00,
+            stock = 75,
+            requiresRx = false,
+            dosageForm = "Aqua Gel",
+            category = "Skincare & Sunscreen",
+            batchNumber = "TDC-HG2024"
+        ),
+        Medicine(
+            id = "sun_2",
+            brandName = "Minimalist Sunscreen SPF 50 Multi-Vitamin",
+            genericSalt = "Niacinamide + Vitamin B5 + Vitamin F (Broad Spectrum PA++++)",
+            manufacturer = "Uprising Science Pvt. Ltd. • Non-Comedogenic",
+            price = 379.00,
+            mrp = 399.00,
+            stock = 90,
+            requiresRx = false,
+            dosageForm = "Fluid Gel",
+            category = "Skincare & Sunscreen",
+            batchNumber = "MNL-MV50"
+        ),
+        Medicine(
+            id = "sun_3",
+            brandName = "Dermatouch Undamaged Ultra Matte Silicone Sunscreen",
+            genericSalt = "Zinc Oxide + Titanium Dioxide (SPF 50 PA+++ Matte Finish)",
+            manufacturer = "Dermatouch Skin Science • Sweat & Water Resistant",
+            price = 465.00,
+            mrp = 499.00,
+            stock = 50,
+            requiresRx = false,
+            dosageForm = "Silicone Gel",
+            category = "Skincare & Sunscreen",
+            batchNumber = "DMT-MS50"
+        )
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)),
+        colors = CardDefaults.cardColors(containerColor = MedWhite),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MedBorder),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(ExpiryAmberLight),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = ExpiryAmberDark,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Derma Suncare Top Shelf",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MedTextPrimary
+                        )
+                        Text(
+                            text = "SPF 50+ & PA++++ Clinical Photoprotection",
+                            fontSize = 11.sp,
+                            color = MedTextSecondary
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MedicalBlueLight,
+                    modifier = Modifier.clickable { onViewAllSuncare() }
+                ) {
+                    Text(
+                        text = "View All →",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MedicalBlueDark,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Horizontal Suncare Cards
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                sunscreens.forEach { sun ->
+                    SuncareShelfCard(medicine = sun, onAddToCart = { onAddToCart(sun) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SuncareShelfCard(
+    medicine: Medicine,
+    onAddToCart: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MedSlate),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MedBorder),
+        modifier = Modifier
+            .width(185.dp)
+            .padding(vertical = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = ExpiryAmberLight,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, ExpiryAmber.copy(alpha = 0.5f))
+                ) {
+                    Text(
+                        text = "SPF 50+ PA++++",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ExpiryAmberDark,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
+                Icon(
+                    Icons.Default.Shield,
+                    contentDescription = null,
+                    tint = ExpiryAmberDark,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = medicine.brandName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = MedTextPrimary,
+                maxLines = 2,
+                lineHeight = 15.sp
+            )
+
+            Text(
+                text = medicine.genericSalt,
+                fontSize = 10.sp,
+                color = MedTextSecondary,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "₹${medicine.price.toInt()}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MedTextPrimary
+                    )
+                    Text(
+                        text = "MRP ₹${medicine.mrp.toInt()}",
+                        fontSize = 10.sp,
+                        color = MedTextMuted,
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                    )
+                }
+
+                Button(
+                    onClick = onAddToCart,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MedicalBlue),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.height(30.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(text = "Add", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
