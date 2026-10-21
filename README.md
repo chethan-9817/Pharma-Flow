@@ -28,7 +28,7 @@ Markdown
 - **Zero-Waste Circular Model**:
   - Identifies certified medicine batches with 15–45 days remaining before expiration.
   - Sells them at a **flat 50% discount** for patients needing immediate short-course treatment.
-  - Tracks total medical waste prevented in grams.
+  - Tracks total medical waste prevented  in grams.
 
 ### 4. NGO Medicine Donation & Community Health Hub
 - **Donate to Vetted Local NGOs**:
