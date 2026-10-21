@@ -22,6 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import android.util.Log
+import com.example.data.firebase.FirebaseFirestoreRepository
+import com.example.data.firebase.FirebaseMedicineDonation
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -29,6 +34,7 @@ import kotlin.random.Random
 class StoreViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: StoreRepository
+    private val firestoreRepository: FirebaseFirestoreRepository = FirebaseFirestoreRepository(application)
 
     init {
         val database = AppDatabase.getInstance(application)
@@ -310,7 +316,7 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
         onSuccess: (earnedKarma: Int) -> Unit
     ) {
         viewModelScope.launch {
-            val (donation, _) = repository.createMedicineDonation(
+            val (donation, unlockedBonus) = repository.createMedicineDonation(
                 medicineName = medicineName,
                 brandName = brandName,
                 category = category,
@@ -323,6 +329,39 @@ class StoreViewModel(application: Application) : AndroidViewModel(application) {
             )
             _ecoKarmaPoints.value += donation.karmaPointsEarned
             SoundManager.playCelebrationSound()
+
+            // Synchronize with Firebase Firestore if user is authenticated
+            val currentUser = Firebase.auth.currentUser
+            if (currentUser != null) {
+                try {
+                    val isoTimestamp = java.text.SimpleDateFormat(
+                        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                        java.util.Locale.US
+                    ).format(java.util.Date())
+                    firestoreRepository.saveDonation(
+                        userId = currentUser.uid,
+                        donation = FirebaseMedicineDonation(
+                            id = donation.id,
+                            userId = currentUser.uid,
+                            medicineName = donation.medicineName,
+                            brandName = donation.brandName,
+                            batchNumber = donation.batchNumber,
+                            expiryDate = donation.expiryDate,
+                            quantity = donation.dosageOrUnits,
+                            packageCondition = donation.packageCondition,
+                            ngoId = donation.recipientNgoId,
+                            ngoName = donation.recipientNgoName,
+                            status = "PENDING",
+                            karmaPointsAwarded = donation.karmaPointsEarned.toLong(),
+                            scratchCardAwarded = (unlockedBonus != null),
+                            createdAt = isoTimestamp
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.w("StoreViewModel", "Firebase donation sync failed", e)
+                }
+            }
+
             onSuccess(donation.karmaPointsEarned)
         }
     }

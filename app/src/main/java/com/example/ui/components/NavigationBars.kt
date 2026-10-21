@@ -38,7 +38,7 @@ import com.example.ui.theme.MedicalBlueDark
 enum class AppDestination(val label: String, val icon: ImageVector, val tag: String) {
     HOME("Home", Icons.Default.MedicalServices, "nav_home"),
     ECO_DEALS("Eco-Deals", Icons.Default.Eco, "nav_eco"),
-    DONATE_RETURN("Donate", Icons.Default.VolunteerActivism, "nav_donate"),
+    DONATE_RETURN("Donate Hub", Icons.Default.VolunteerActivism, "nav_donate"),
     TRACK("Track", Icons.Default.LocalShipping, "nav_track"),
     REWARDS("Rewards", Icons.Default.AutoAwesome, "nav_rewards")
 }

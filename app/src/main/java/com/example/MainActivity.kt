@@ -27,6 +27,7 @@ import com.example.ui.components.AppDestination
 import com.example.ui.components.EvaluatorPresenterBar
 import com.example.ui.screens.CartSheet
 import com.example.ui.screens.DonateAndReturnScreen
+import com.example.ui.screens.DonationHubScreen
 import com.example.ui.screens.EcoDealsScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LiveTrackingScreen
@@ -36,6 +37,11 @@ import com.example.ui.screens.SellAndReturnScreen
 import com.example.ui.theme.MedLifecycleTheme
 import com.example.ui.theme.MedSlate
 import com.example.ui.viewmodel.StoreViewModel
+import com.example.data.firebase.authStateFlow
+import com.example.ui.screens.SignInScreen
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 
 class MainActivity : ComponentActivity() {
 
@@ -47,14 +53,30 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MedLifecycleTheme {
-                MedLifecycleApp(viewModel = viewModel)
+                val auth = Firebase.auth
+                val currentUser by auth.authStateFlow().collectAsStateWithLifecycle(initialValue = auth.currentUser)
+                val user = currentUser
+
+                if (user == null) {
+                    SignInScreen()
+                } else {
+                    MedLifecycleApp(
+                        viewModel = viewModel,
+                        currentUser = user,
+                        onSignOut = { auth.signOut() }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun MedLifecycleApp(viewModel: StoreViewModel) {
+fun MedLifecycleApp(
+    viewModel: StoreViewModel,
+    currentUser: FirebaseUser,
+    onSignOut: () -> Unit
+) {
     var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
     var isCartOpen by remember { mutableStateOf(false) }
 
@@ -111,7 +133,9 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                     onSimulateDelivered = { viewModel.simulateRiderMarkDelivered() },
                     onGrantScratchCard = { viewModel.grantInstantDemoScratchCard() },
                     onApproveListing = { viewModel.simulateChemistApproveListing() },
-                    onVerifyNgoDonation = { viewModel.simulateNgoVerifyDonation() }
+                    onVerifyNgoDonation = { viewModel.simulateNgoVerifyDonation() },
+                    userEmail = currentUser.email,
+                    onSignOut = onSignOut
                 )
             }
         },
@@ -154,6 +178,9 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                         },
                         onNavigateToRewards = {
                             currentDestination = AppDestination.REWARDS
+                        },
+                        onNavigateToDonate = {
+                            currentDestination = AppDestination.DONATE_RETURN
                         }
                     )
                 }
@@ -174,7 +201,7 @@ fun MedLifecycleApp(viewModel: StoreViewModel) {
                 }
 
                 AppDestination.DONATE_RETURN -> {
-                    DonateAndReturnScreen(
+                    DonationHubScreen(
                         viewModel = viewModel,
                         onNavigateToRewards = { currentDestination = AppDestination.REWARDS }
                     )

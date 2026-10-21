@@ -52,6 +52,8 @@ fun EvaluatorPresenterBar(
     onGrantScratchCard: () -> Unit,
     onApproveListing: () -> Unit = {},
     onVerifyNgoDonation: () -> Unit = {},
+    userEmail: String? = null,
+    onSignOut: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -115,6 +117,57 @@ fun EvaluatorPresenterBar(
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp
                         )
+                    }
+                }
+
+                // Firebase Status Pill
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF59E0B).copy(alpha = 0.2f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B)),
+                    modifier = Modifier.testTag("evaluator_firebase_status")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFFF59E0B),
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Firebase: Connected",
+                            color = Color(0xFFFDE68A),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // User Sign Out Pill if logged in
+                if (!userEmail.isNullOrBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFFEF4444).copy(alpha = 0.2f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
+                        modifier = Modifier
+                            .clickable { onSignOut() }
+                            .testTag("evaluator_sign_out")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Sign Out (${userEmail.substringBefore("@")})",
+                                color = Color(0xFFFCA5A5),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        }
                     }
                 }
 

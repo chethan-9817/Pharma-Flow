@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -115,6 +116,7 @@ fun HomeScreen(
     onSimulateScanRx: (onDone: () -> Unit) -> Unit,
     onAddToCart: (Medicine) -> Unit,
     onNavigateToRewards: () -> Unit,
+    onNavigateToDonate: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showRxScannerSheet by remember { mutableStateOf(false) }
@@ -397,6 +399,108 @@ fun HomeScreen(
                             ) {
                                 Text(
                                     text = if (prescriptionResult?.isVerified == true) "View" else "Scan Rx",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // NGO Medicine Donation Hub Callout Banner
+            item(span = { GridItemSpan(2) }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onNavigateToDonate() }
+                        .testTag("home_donation_hub_banner"),
+                    colors = CardDefaults.cardColors(containerColor = MedWhite),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(EcoEmeraldLight.copy(alpha = 0.7f), MedicalBlueLight.copy(alpha = 0.45f))
+                                )
+                            )
+                            .border(1.dp, EcoEmerald.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = EcoEmeraldDark,
+                                    modifier = Modifier.size(42.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.VolunteerActivism,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "COMMUNITY DONATION HUB",
+                                            color = EcoEmeraldDark,
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 11.sp,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = EcoEmerald
+                                        ) {
+                                            Text(
+                                                text = "+250 PTS",
+                                                color = Color.White,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "Donate Surplus Medicine to Nearby NGOs",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = MedTextPrimary
+                                    )
+                                    Text(
+                                        text = "Photo label verification • 4 local drop points • Free pickup",
+                                        fontSize = 11.sp,
+                                        color = MedTextSecondary
+                                    )
+                                }
+                            }
+
+                            Button(
+                                onClick = onNavigateToDonate,
+                                colors = ButtonDefaults.buttonColors(containerColor = EcoEmeraldDark),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Donate",
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp

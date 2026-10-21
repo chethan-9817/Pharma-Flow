@@ -1,0 +1,222 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile tracking karma points, scratch cards, and tier status",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "karmaPoints": {
+          "type": "integer",
+          "description": "Total earned karma points from medicine donations"
+        },
+        "scratchCardsCount": {
+          "type": "integer",
+          "description": "Number of available scratch cards for rewards"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId", "email", "displayName", "karmaPoints", "scratchCardsCount", "createdAt"]
+    },
+    "MedicineDonation": {
+      "title": "MedicineDonation",
+      "description": "User medicine donation record to verified NGOs and community clinics",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique donation record identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of donating user"
+        },
+        "medicineName": {
+          "type": "string",
+          "description": "Name of the donated medicine"
+        },
+        "brandName": {
+          "type": "string",
+          "description": "Brand or manufacturer"
+        },
+        "batchNumber": {
+          "type": "string",
+          "description": "Medicine batch number from packaging"
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date printed on packaging"
+        },
+        "quantity": {
+          "type": "string",
+          "description": "Quantity or number of strips / units"
+        },
+        "packageCondition": {
+          "type": "string",
+          "description": "Condition of the sealed package (e.g. Unopened, Sealed)"
+        },
+        "ngoId": {
+          "type": "string",
+          "description": "Selected NGO identifier"
+        },
+        "ngoName": {
+          "type": "string",
+          "description": "Name of the recipient NGO"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACCEPTED", "PICKUP_SCHEDULED", "VERIFIED", "COMPLETED"],
+          "description": "Current lifecycle status of the donation"
+        },
+        "karmaPointsAwarded": {
+          "type": "integer",
+          "description": "Karma points granted for this donation"
+        },
+        "scratchCardAwarded": {
+          "type": "boolean",
+          "description": "Whether a bonus scratch card was earned"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of donation creation"
+        }
+      },
+      "required": ["id", "userId", "medicineName", "ngoId", "ngoName", "status", "karmaPointsAwarded", "createdAt"]
+    },
+    "UserListing": {
+      "title": "UserListing",
+      "description": "User medicine return / exchange / resale listing",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique listing identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the listing owner"
+        },
+        "medicineName": {
+          "type": "string",
+          "description": "Brand name of the listed medicine"
+        },
+        "genericSalt": {
+          "type": "string",
+          "description": "Active pharmaceutical ingredient"
+        },
+        "batchNumber": {
+          "type": "string",
+          "description": "Packaging batch number"
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date"
+        },
+        "packCondition": {
+          "type": "string",
+          "description": "Packaging condition rating"
+        },
+        "askingPrice": {
+          "type": "number",
+          "description": "Listing price or 0 for direct exchange"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING_VERIFICATION", "ACTIVE", "SOLD", "RETURNED"],
+          "description": "Status of the listing"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional product image URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp created"
+        }
+      },
+      "required": ["id", "userId", "medicineName", "batchNumber", "expiryDate", "status", "createdAt"]
+    },
+    "UserOrder": {
+      "title": "UserOrder",
+      "description": "Purchase order for medicines and healthcare products",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique order ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of ordering user"
+        },
+        "itemCount": {
+          "type": "integer",
+          "description": "Number of items in the order"
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "Subtotal amount before discount"
+        },
+        "discount": {
+          "type": "number",
+          "description": "Discount applied"
+        },
+        "total": {
+          "type": "number",
+          "description": "Final paid amount"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PLACED", "DISPATCHED", "DELIVERED", "CANCELLED"],
+          "description": "Status of the order"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp created"
+        }
+      },
+      "required": ["id", "userId", "itemCount", "total", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile documents strictly managed by the authenticated user"
+    },
+    "/users/{userId}/donations/{donationId}": {
+      "schema": { "$ref": "#/entities/MedicineDonation" },
+      "description": "Medicine donations made by the user to NGOs"
+    },
+    "/users/{userId}/listings/{listingId}": {
+      "schema": { "$ref": "#/entities/UserListing" },
+      "description": "Medicine resale and exchange listings owned by the user"
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/UserOrder" },
+      "description": "Medicine purchases and delivery orders placed by the user"
+    }
+  }
+}
